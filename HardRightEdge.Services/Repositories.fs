@@ -3,9 +3,11 @@
 open System
 open System.Net
 open System.Data.Common
+open Option
 
 open HardRightEdge.Services.Domain
 open HardRightEdge.Services.Data
+open HardRightEdge.Services.Infrastructure.Common
 
 module StockRepository =
 
@@ -54,10 +56,10 @@ module StockRepository =
                             LIMIT     1"
 
         db.Open()
-        cmd?stockId <- stockId
+        cmd?stockId <- unwrap stockId
         cmd?id <- match stockPrice with
-                  | Some { id = Some id' } -> Nullable<int64>(id')
-                  | _ -> Nullable<int64>()
+                  | Some { id = Some id' } -> unwrap id'
+                  | _ -> null
         
         use rdr = cmd.ExecuteReader()
         if rdr.Read()
@@ -80,14 +82,39 @@ module StockRepository =
   let private updateStock (stock: Stock) =
     use db = new Db ()
     use cmd = db?Sql <- "UPDATE Stock
-                        SET     name = :name
-                        WHERE   id = :id"
+                          SET name = :name,
+                              previousName = (SELECT name FROM Stock WHERE id = 1 LIMIT 1)
+                          where id = :id
+                          and name <> :name;
+                          
+                          SELECT  previousName 
+                          FROM    Stock 
+                          WHERE   id = :id;"
 
     db.Open ()
     cmd?name <- stock.name
     cmd?id <- stock.id
-    cmd.ExecuteNonQuery () |> ignore
-    stock.id
+    let s = { stock with previousName = ofObj(cmd.ExecuteScalar<string> ()) }
+    s
+
+  let private toStockViewName (name: string) = name.Replace (".", "_")
+
+  let private createStockView name (id: int64 option) =
+    match id with
+    | Some idVal ->
+      DbAdmin.createView (toStockViewName name)
+                        (sprintf "SELECT  strftime('%%s', date) row_names,
+                                          openp Open,
+                                          high High,
+                                          low Low,
+                                          close Close,
+                                          volume Volume,
+                                          adjClose Adjusted
+                                  FROM    StockPrice
+                                  WHERE   stockId = %i" idVal) |> ignore
+      id
+     | _ -> id
+    
 
   let private insertStock (stock: Stock) =
     use db = new Db ()
@@ -101,48 +128,54 @@ module StockRepository =
     Some (unbox<int64> (cmd.ExecuteScalar()))
 
   let save stock =
-
+    
     let stockId = match stock with
-                  | { id = Some sId } -> updateStock stock
-                  | _ -> insertStock stock   
+                  | { id = Some sId } -> 
+                    match updateStock stock with
+                    | { id = id'; name = nam; previousName = Some prevName } when prevName <> stock.name -> 
+                      // Name changed, therefore drop & recreate View
+                      toStockViewName >> DbAdmin.dropView <| prevName |> ignore
+                      createStockView nam id'
+                    | _ -> stock.id
 
-    { stock with 
-        id = stockId;
-        dataProviders = [| for dataProviderStock in stock.dataProviders ->
-                              saveDataProviderStock { dataProviderStock with stockId = stockId } |] }
+                  | _ -> insertStock >> createStockView stock.name <| stock
 
-
-      (*use db = new Db ()
-      use cmd = db?Sql <- "INSERT INTO  StockPrice 
-                                        ( stockId, 
-                                          date, 
-                                          openp, 
-                                          high, 
-                                          low, 
-                                          close, 
-                                          volume, 
-                                          adjClose  ) 
-                            VALUES      ( :stockId, 
-                                          :date, 
-                                          :openp, 
-                                          :high, 
-                                          :low, 
-                                          :close, 
-                                          :volume, 
-                                          :adjClose )"
-      
-      db.Open ()
-      for price in stock.prices do
-          cmd?stockId <- stock.id
-          cmd?date <- price.date
-          cmd?openp <- price.openp
-          cmd?high <- price.high
-          cmd?low <- price.low
-          cmd?close <- price.close
-          cmd?volume <- price.volume
-          cmd?adjClose <- price.adjClose            
-          cmd.ExecuteNonQuery() |> ignore
-      None*)
+    let savedStock = { stock with 
+                        id = stockId;
+                        dataProviders = [| for dataProviderStock in stock.dataProviders ->
+                                            saveDataProviderStock { dataProviderStock with stockId = stockId } |] }
+    use db = new Db ()
+    use cmd = db?Sql <- "INSERT INTO  StockPrice 
+                                      ( stockId, 
+                                        date, 
+                                        openp, 
+                                        high, 
+                                        low, 
+                                        close, 
+                                        volume, 
+                                        adjClose  ) 
+                          VALUES      ( :stockId, 
+                                        :date, 
+                                        :openp, 
+                                        :high, 
+                                        :low, 
+                                        :close, 
+                                        :volume, 
+                                        :adjClose )"
+    
+    db.Open ()
+    for price in stock.prices do
+      cmd?stockId <- stockId
+      cmd?date <- price.date
+      cmd?openp <- price.openp
+      cmd?high <- price.high
+      cmd?low <- price.low
+      cmd?close <- price.close
+      cmd?volume <- price.volume
+      cmd?adjClose <- price.adjClose            
+      cmd.ExecuteNonQuery() |> ignore
+    
+    savedStock
 
   let get (id: int64) =
     // TODO: Adapt the following code to work with multiple 
@@ -152,6 +185,7 @@ module StockRepository =
     use db = new Db()
     use cmd = db?Sql <- "SELECT     Stock.id,
                                     name,
+                                    previousName,
                                     dataProviderId,
                                     symbol
                           FROM      Stock
@@ -167,6 +201,7 @@ module StockRepository =
     if rdr.Read()
     then Some { id = Some rdr?id
                 name = rdr?name
+                previousName = rdr?previousName
                 // TODO: Call StockRepository.getStockPriceByStock 1L |> Seq.take 1 |> Seq.toList
                 // This will only include the latest stock price.
                 // The AppService can then fetch all new prices from this one until today

@@ -6,7 +6,7 @@ module Domain =
 
   let default' (deflt: unit -> 't) = deflt()
 
-  let priceStartDate () = DateTime.Now.AddYears(-1)
+  let priceStartDate () = DateTime.Now.AddMonths(-4)
 
   let priceEndDate () = DateTime.Now.AddDays(-1.0)
     
@@ -33,5 +33,6 @@ module Domain =
   type Stock = {  
     id: int64 option; 
     name: string; 
+    previousName: string option;
     prices: StockPrice list;
     dataProviders: DataProviderStock seq; }

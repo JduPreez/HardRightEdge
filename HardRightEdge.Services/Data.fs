@@ -5,13 +5,13 @@ open System.IO
 open System.Net
 open System.Data
 open System.Data.Common
-open Mono.Data.Sqlite
+open System.Data.SQLite
 open HardRightEdge.Services.Infrastructure.Common
 
 module Data = 
 
-  type DynamicDbDataReader (reader:SqliteDataReader) =
-    
+  type DynamicDbDataReader (reader:SQLiteDataReader) =
+
     member private me.Reader = reader
     member me.Read() = reader.Read()
     static member (?) (dr:DynamicDbDataReader, name:string) : 'R =
@@ -23,29 +23,30 @@ module Data =
     interface IDisposable with
         member me.Dispose() = reader.Dispose()
 
-  type DynamicDbCommand (cmd:SqliteCommand) = 
+  type DynamicDbCommand (cmd:SQLiteCommand) = 
     member private me.Command = cmd
         
     static member (?<-) (cmd:DynamicDbCommand, name:string, value: obj) = 
       // TODO: Take the pattern match that converts value:obj to null for
       // option types, and put into a separate function. Then call this from 
       // the "else ..." part too.
-      if cmd.Command.Parameters.Contains(name) then
-          cmd.Command.Parameters.[name].Value <- nullIfNone value |> ignore
-      else cmd.Command.Parameters.Add(SqliteParameter(name, box (nullIfNone value))) |> ignore       
+      if cmd.Command.Parameters.Contains(name) then        
+        cmd.Command.Parameters.RemoveAt(name)
+      
+      cmd.Command.Parameters.Add(SQLiteParameter(name, unwrap value)) |> ignore       
 
     member me.ExecuteNonQuery() = cmd.ExecuteNonQuery()
 
     member me.ExecuteReader() = new DynamicDbDataReader(cmd.ExecuteReader())
 
-    member me.ExecuteScalar() = cmd.ExecuteScalar()
+    member me.ExecuteScalar<'t>() = cmd.ExecuteScalar() :?> 't
 
     member me.Parameters = cmd.Parameters
 
     interface IDisposable with
         member me.Dispose() = cmd.Dispose()
 
-  type Db (conn: SqliteConnection) =       
+  type Db (conn: SQLiteConnection) =       
 
     static member FileName dbName = sprintf "%s.db" dbName
 
@@ -54,12 +55,12 @@ module Data =
     member private me.Connection = conn
 
     static member (?<-) (conn:Db, name, query) =
-        let cmd = new SqliteCommand(query, conn.Connection)
+        let cmd = new SQLiteCommand(query, conn.Connection)
         cmd.CommandType <- CommandType.Text
         new DynamicDbCommand(cmd)
 
     static member (?) (conn:Db, sproc) = 
-        let cmd = new SqliteCommand(sproc, conn.Connection)
+        let cmd = new SQLiteCommand(sproc, conn.Connection)
         cmd.CommandType <- CommandType.StoredProcedure
         new DynamicDbCommand(cmd)
   
@@ -68,18 +69,33 @@ module Data =
 
     new () = new Db(Db.Name)
 
-    new (dbName: string) = new Db(new SqliteConnection(sprintf "Data Source=%s;Version=3;" (Db.FileName dbName)))
+    new (dbName: string) = new Db(new SQLiteConnection(sprintf "Data Source=%s;Version=3;" (Db.FileName dbName)))
     
     interface IDisposable with
         member me.Dispose() = conn.Dispose()
   
   module DbAdmin =
 
-    let public prepare dbName =
-      if not (File.Exists dbName)
-      then SqliteConnection.CreateFile (Db.FileName dbName)
+    let dropView name =
+      use db = new Db()
+      use cmd = db?Sql <- sprintf "DROP VIEW IF EXISTS %O" (unwrap name)
+      db.Open()
+      cmd.ExecuteNonQuery() |> ignore
 
-      use db = new Db(dbName)
+    let createView name query = 
+      use db = new Db()
+      use cmd = db?Sql <- sprintf "CREATE VIEW %s 
+                                  AS
+                                  %s" name query
+
+      db.Open ()
+      cmd.ExecuteNonQuery () |> ignore
+
+    let prepare dbName =
+      if not (File.Exists dbName)
+      then SQLiteConnection.CreateFile (Db.FileName dbName)
+
+      use db = new Db()
       use cmd = db?Sql <- "SELECT name FROM sqlite_master WHERE type='table' AND name='StockPrice'"
 
       db.Open()
@@ -87,7 +103,9 @@ module Data =
       if not rdr.HasRows
       then
         // Table Stock
-        use createTblStock = db?Sql <- "CREATE TABLE Stock (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)"
+        use createTblStock = db?Sql <- "CREATE TABLE Stock (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                                                            name TEXT NOT NULL,
+                                                            previousName TEXT)"
         createTblStock.ExecuteNonQuery() |> ignore
 
         // Table StockPrice

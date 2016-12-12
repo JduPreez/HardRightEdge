@@ -67,6 +67,7 @@ module Yahoo =
                                 symbol = symbol.ToUpper();
                                 dataProvider = DataProvider.Yahoo } |];
           name = symbol.ToUpper();
+          previousName = None;
           prices = [ for price in priceHistory.[1..] do
                                     let cols = price.Split(',')
         

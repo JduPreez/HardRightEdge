@@ -1,11 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HardRightEdge.Services", "HardRightEdge.Services\HardRightEdge.Services.fsproj", "{7E12DEEF-285E-451E-A209-50FC7023B56A}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HardRightEdge", "HardRightEdge\HardRightEdge.fsproj", "{3F5BE134-1783-46DF-A773-C12B3DD24184}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HardRightEdge.Tests", "HardRightEdge.Tests\HardRightEdge.Tests.fsproj", "{B635251D-2924-45AF-B0B3-A2E2DB90E343}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EEA8AA0D-9BDA-4D8F-9CEB-0B79A8E3177A}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		Roadmap.md = Roadmap.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +29,10 @@ Global
 		{3F5BE134-1783-46DF-A773-C12B3DD24184}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F5BE134-1783-46DF-A773-C12B3DD24184}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F5BE134-1783-46DF-A773-C12B3DD24184}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B635251D-2924-45AF-B0B3-A2E2DB90E343}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B635251D-2924-45AF-B0B3-A2E2DB90E343}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B635251D-2924-45AF-B0B3-A2E2DB90E343}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B635251D-2924-45AF-B0B3-A2E2DB90E343}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -5,6 +5,12 @@ open HardRightEdge.Services.Domain
 open HardRightEdge.Services.Repositories
 open HardRightEdge.Services.Infrastructure
 
+open RDotNet
+open RProvider
+open RProvider.graphics
+open RProvider.stats
+open RProvider.zoo
+
 module DomainServices =
 
   open HardRightEdge.Services.Integration.Yahoo
@@ -28,3 +34,7 @@ module DomainServices =
     // 3. Save the financial security
     | Some stock -> Some (StockRepository.save(stock))
     | _ -> None
+
+  let saveFinancialSecurity x = 
+    StockRepository.save x
+      
