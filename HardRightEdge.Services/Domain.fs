@@ -14,11 +14,11 @@ module Domain =
     id:         int64 option;
     stockId:    int64 option;
     date:       DateTime; 
-    openp:      decimal;
-    high:       decimal; 
-    low:        decimal;
-    close:      decimal;
-    adjClose:   decimal;
+    openp:      double;
+    high:       double; 
+    low:        double;
+    close:      double;
+    adjClose:   double;
     volume:     int64 }
 
   type DataProvider =

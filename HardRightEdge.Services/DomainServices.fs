@@ -7,9 +7,9 @@ open HardRightEdge.Services.Infrastructure
 
 open RDotNet
 open RProvider
-open RProvider.graphics
-open RProvider.stats
-open RProvider.zoo
+//open RProvider.graphics
+//open RProvider.stats
+//open RProvider.zoo
 
 module DomainServices =
 
