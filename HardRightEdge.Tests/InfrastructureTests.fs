@@ -5,7 +5,9 @@ open NUnit.Framework
 open FsUnit
 open HardRightEdge.Services.Infrastructure.Common
 
+[<Category("Unit > Infrastructure.Common")>]
 module InfrastructureTests = 
+  
   
   [<Test>]
   let ``unwrap should return value if object is Some object`` () =

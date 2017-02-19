@@ -28,28 +28,47 @@ module Portfolio =
 
   module View =
 
+    open System.Collections.Generic
+
+    let private charts = ref List.empty<IDictionary<string, obj> * IDictionary<string, obj>>
+
+    let grid (columns: int) (items: int) = 
+      let rows = float(items)/float(columns) // Number of rows
+      box [ Convert.ToInt32(ceil rows); columns ] // Rows, Columns
+
     let element (stock: Stock) =
-      let closingPrices = List.map (fun p -> p.close) stock.prices
-      
-      R.plot(namedParams["x", box closingPrices;
-                        "main", box "Stock 2"]) |> ignore
-
-      R.lines(
-        namedParams [      
-          "x", box closingPrices;
-          "main", box "Stock 2";
-          "type", box "o"; 
-          "pch", box 22;
-          "lty", box 2;
-          "col", box "red" ]) |> ignore
-
-    let scene () =
+      // Resize the plot
       R.par(
         namedParams [
-          "mfrow", box [ 2; 2; ]
+          "mfrow", grid 3 ((!charts).Length + 1)
         ]) |> ignore
 
-      element
+      // Calculate latest chart
+      let closingPrices = List.map (fun p -> p.close) stock.prices
+      
+      let chartPlot = namedParams["x", box closingPrices;
+                                  "main", box "Stock 2"]
+      
+
+      let chartLines = namedParams [  "x", box closingPrices;
+                                      "main", box "Stock 2";
+                                      "type", box "o"; 
+                                      "pch", box 22;
+                                      "lty", box 2;
+                                      "col", box "red" ]
+      
+      // Add the latest chart to the total list of charts
+      let charts' = (chartPlot, chartLines) :: !charts
+
+      // Now redraw all charts. This has to be done to make it
+      // feel like R reactively draws the charts, because it wipes the
+      // screen after a call to R.plot.
+      charts := charts'
+      for cp, cl in charts' do
+        R.plot cp |> ignore
+        R.lines cl |> ignore
+
+    let portfolioScene () = element
 
   module Controller =
 
@@ -63,14 +82,7 @@ module Portfolio =
                 ()
       | _ -> ()
 
-    // TODO: Change this into function compositions for chain
-    // of view >> controller <| stocks
     let show (scene: unit -> (Stock -> unit)) (stocks : IObservable<Stock>) =
       let element = scene ()
 
-      for stock in stocks do
-        element stock
-
       subscribe stocks element
-
-        //securityListView.Items.Add (new ListViewItem([| security.name |])) |> ignore

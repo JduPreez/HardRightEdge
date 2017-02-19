@@ -12,6 +12,7 @@ open HardRightEdge.Portfolio.View
 
 module IntegrationTests = 
   
+  [<Category("Integration > DomainServices")>]
   [<Test>]
   let ``DomainServices.saveFinancialSecurity should update stock`` () =
     let stock =  {  id = Some 1L;
@@ -24,8 +25,9 @@ module IntegrationTests =
     
     reslt |> should not' (throw typeof<Exception>)
 
+  [<Category("Integration > Portfolio")>]
   [<Test>]
-  let ``Portfolio MVC should draw charts`` () =
+  let ``Portfolio.Controller should draw charts`` () =
     let r = Random ()
     let stocks = [ for i in 1 .. 4 ->
                     { id = Some (int64 i);
@@ -43,5 +45,4 @@ module IntegrationTests =
                                     volume = 0L }]
                       dataProviders = Seq.empty } ]
 
-    // TODO: Make this work
-    show scene << with' <| stocks
+    show portfolioScene << with' <| stocks

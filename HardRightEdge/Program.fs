@@ -41,6 +41,8 @@ let main argv =
   let widgets = [ 3; 8; 12; 15; 19; 18; 18; 20; ]
   let sprockets = [ 5; 4; 6; 7; 12; 9; 5; 6; ]   
 
+  //show scene << with' <| stocks
+
   (*R.par(
     namedParams [
       "mfrow", box [ 2; 2; ]
