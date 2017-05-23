@@ -12,6 +12,6 @@ It does not aim to provide any front end analytics tools, but rather makes sure 
 4. .NET Framework 4.6.1
 5. R (statistics)
 
-	### Recommended
+	### Recommended :-)
 
 	* SQLite Studio: http://sqlitestudio.pl/
