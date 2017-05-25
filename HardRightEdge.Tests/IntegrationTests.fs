@@ -6,8 +6,8 @@ open FsUnit
 open HardRightEdge
 open HardRightEdge.Services.Domain
 open HardRightEdge.Services.DomainServices
-open HardRightEdge.Portfolio.Controller
-open HardRightEdge.Portfolio.Model
+open HardRightEdge.Presentation.Controller
+open HardRightEdge.Presentation.Model
 open HardRightEdge.Portfolio.View
 
 module IntegrationTests = 
@@ -45,4 +45,5 @@ module IntegrationTests =
                                     volume = 0L }]
                       dataProviders = Seq.empty } ]
 
-    show portfolioScene << with' <| stocks
+    show1<Stock> portfolioChartScene << with' <| stocks
+    System.Threading.Thread.Sleep(TimeSpan.FromSeconds(10.00))

@@ -10,6 +10,12 @@ module Infrastructure =
 
   module Common =
 
+    let ofObj value = match value with null -> None | _ -> Some value
+
+    let ofNullable (value:System.Nullable<'T>) =  if value.HasValue then Some value.Value else None
+
+    let toNullable option = match option with None -> System.Nullable() | Some v -> System.Nullable(v) 
+
     /// <remarks>
     /// Derived from http://stackoverflow.com/questions/6289761/how-to-downcast-from-obj-to-optionobj.
     /// </remarks>

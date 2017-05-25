@@ -5,6 +5,9 @@ open HardRightEdge.Services.Data
 open HardRightEdge.Services
 open HardRightEdge.Services.Domain
 open HardRightEdge.Services.DomainServices
+open HardRightEdge.Presentation.Controller
+open HardRightEdge.Presentation.Model
+open HardRightEdge.PortfolioManagement.View
 
 open RDotNet
 open RProvider
@@ -17,13 +20,28 @@ let main argv =
   Application.EnableVisualStyles()
   Application.SetCompatibleTextRenderingDefault false
   
-  ////DbAdmin.prepare Db.Name 
-  
-  //use form = new SecurityListForm ()
+  DbAdmin.prepare Db.Name
 
-  let gsk = DomainServices.getFinancialSecurity "GSK.L"
+  let r = Random ()
+  let stocks = [ for i in 1 .. 4 ->
+                  { id = Some (int64 i)
+                    name = "GSK.L2"
+                    previousName = None
+                    prices = [for x in 1L .. 100L ->
+                                { id = Some x
+                                  stockId = Some (int64 i)
+                                  date = DateTime.Now
+                                  openp = 0.0
+                                  high = 0.0
+                                  low = 0.0
+                                  close = double (r.Next(1, 100))
+                                  adjClose = 0.0
+                                  volume = 0L }]
+                    dataProviders = Seq.empty } ]
 
+  use form = show2<Form, Stock> portfolioManagementScene << with' <| stocks
 
+  //let gsk = DomainServices.getFinancialSecurity "GSK.L"
 
   //if gsk.IsSome then
   //  form.Securities <- [ gsk.Value ]
@@ -36,39 +54,6 @@ let main argv =
         
   let y = saveFinancialSecurity x*)
  
-  //Application.Run(form);
-
-  let widgets = [ 3; 8; 12; 15; 19; 18; 18; 20; ]
-  let sprockets = [ 5; 4; 6; 7; 12; 9; 5; 6; ]   
-
-  //show scene << with' <| stocks
-
-  (*R.par(
-    namedParams [
-      "mfrow", box [ 2; 2; ]
-    ]) |> ignore
-
-  R.plot(namedParams["x", box widgets;
-                    "main", box "Stock 2"]) |> ignore  
-
-  R.lines(
-    namedParams [      
-      "x", box widgets;
-      "main", box "Stock 2";
-      "type", box "o"; 
-      "pch", box 22;
-      "lty", box 2;
-      "col", box "red" ]) |> ignore
-
-  R.plot(sprockets) |> ignore
-
-  R.lines(
-    namedParams [      
-      "x", box sprockets;
-      "main", box "Stock 2";
-      "type", box "o"; 
-      "pch", box 22;
-      "lty", box 2;
-      "col", box "red" ]) |> ignore*)
+  Application.Run(form);
 
   0

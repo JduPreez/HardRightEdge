@@ -4,12 +4,10 @@ open System
 open HardRightEdge.Services.Domain
 open HardRightEdge.Services.Repositories
 open HardRightEdge.Services.Infrastructure
+open HardRightEdge.Services.Infrastructure.Common
 
 open RDotNet
 open RProvider
-//open RProvider.graphics
-//open RProvider.stats
-//open RProvider.zoo
 
 module DomainServices =
 
@@ -37,4 +35,11 @@ module DomainServices =
 
   let saveFinancialSecurity x = 
     StockRepository.save x
-      
+
+  module DataProviderStock =
+  
+    // Find the stockId of the DataProviderStock with the specified DataProvider type.
+    let stockId dataProvider (stocks: DataProviderStock seq) = 
+      match Seq.tryFind (fun dps -> dps.dataProvider = dataProvider) stocks with
+      | Some s -> toNullable s.stockId
+      | _ -> new System.Nullable<int64>()

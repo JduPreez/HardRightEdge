@@ -8,13 +8,15 @@ open FSharp.Control.Reactive.Observable
 
 open RDotNet
 open RProvider
+open RProvider.``base``
 open RProvider.graphics
+open RProvider.grDevices
 
 open HardRightEdge.Services.Domain
 
 module Portfolio =
 
-  module Model =
+  (*module Model =
 
     let private models' = ref List.empty<Stock>
 
@@ -24,7 +26,7 @@ module Portfolio =
 
     let with' modls =
       models' := List.append !models' modls
-      get ()
+      get ()*)
 
   module View =
 
@@ -36,7 +38,7 @@ module Portfolio =
       let rows = float(items)/float(columns) // Number of rows
       box [ Convert.ToInt32(ceil rows); columns ] // Rows, Columns
 
-    let element (stock: Stock) =
+    let chart (stock: Stock) =
       // Resize the plot
       R.par(
         namedParams [
@@ -66,15 +68,18 @@ module Portfolio =
       charts := charts'
       for cp, cl in charts' do
         R.plot cp |> ignore
-        R.lines cl |> ignore
+        R.lines cl |> ignore       
+      
+      R.dev_flush() |> ignore
 
-    let portfolioScene () = element
+    let portfolioChartScene () = chart
 
-  module Controller =
+  (*Moved to HardRightEdge.Presentation.
+    module Controller =
 
     let private observation : IDisposable option ref = ref None
 
-    let private subscribe modls (onNext : Stock -> unit) = 
+    let private subscribe<'t> modls (onNext : 't -> unit) = 
       match !observation with
       | None -> observation :=  modls
                                 |> subscribeWithCallbacks onNext ignore ignore
@@ -82,7 +87,5 @@ module Portfolio =
                 ()
       | _ -> ()
 
-    let show (scene: unit -> (Stock -> unit)) (stocks : IObservable<Stock>) =
-      let element = scene ()
-
-      subscribe stocks element
+    let show<'t> (scene: unit -> ('t -> unit)) (entity : IObservable<'t>) =
+      subscribe<'t> entity (scene ())*)
