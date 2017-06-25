@@ -68,7 +68,7 @@ module Portfolio =
       charts := charts'
       for cp, cl in charts' do
         R.plot cp |> ignore
-        R.lines cl |> ignore       
+        R.lines cl |> ignore
       
       R.dev_flush() |> ignore
 

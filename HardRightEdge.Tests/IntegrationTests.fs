@@ -3,7 +3,6 @@
 open System
 open NUnit.Framework
 open FsUnit
-open HardRightEdge
 open HardRightEdge.Services.Domain
 open HardRightEdge.Services.DomainServices
 open HardRightEdge.Presentation.Controller

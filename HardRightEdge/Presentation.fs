@@ -33,8 +33,6 @@ module Presentation =
       subscribe<'model> modls observer
       view
 
-
-  // TODO: Test this module!
   module Model =
 
     let private models : Map<string, IObservable<_>> ref = ref Map.empty<string, IObservable<_>>

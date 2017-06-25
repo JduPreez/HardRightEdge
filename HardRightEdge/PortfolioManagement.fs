@@ -1,17 +1,13 @@
 ﻿namespace HardRightEdge
 
 open System
-open System.Drawing
-open System.Reactive
 open System.Windows.Forms
-open System.ComponentModel
-open System.Reactive.Linq
 open FSharp.Control.Reactive
 open FSharp.Control.Reactive.Observable
-open HardRightEdge.Services
+open HardRightEdge.Services.Infrastructure.Common
 open HardRightEdge.Services.Domain
 open HardRightEdge.Services.DomainServices
-open HardRightEdge.Services.Infrastructure.Common
+open HardRightEdge.Services.DomainServices.DataProviderStock
 
 module PortfolioManagement =
 
@@ -98,12 +94,12 @@ module PortfolioManagement =
 
       member form.updateSecurityListView (stock: Stock) =
         let gridRow = portfolioGridView.Rows.[portfolioGridView.Rows.Add ()]
-        gridRow.Cells.[Columns.Id].Value <- toNullable stock.id
-        gridRow.Cells.[Columns.Name].Value <- stock.name
-        gridRow.Cells.[Columns.YahooId].Value <- DataProvider.Yahoo
-        gridRow.Cells.[Columns.Yahoo].Value <-  DataProviderStock.stockId DataProvider.Yahoo  stock.dataProviders
-        gridRow.Cells.[Columns.GoogleId].Value <- DataProvider.Google
-        gridRow.Cells.[Columns.Google].Value <- DataProviderStock.stockId DataProvider.Google stock.dataProviders
+        gridRow.Cells.[Columns.Id].Value        <- toNullable stock.id
+        gridRow.Cells.[Columns.Name].Value      <- stock.name
+        gridRow.Cells.[Columns.YahooId].Value   <- stock |> DataProviderStock.get DataProvider.Yahoo  |> stockId
+        gridRow.Cells.[Columns.Yahoo].Value     <- stock |> DataProviderStock.get DataProvider.Yahoo  |> symbol
+        gridRow.Cells.[Columns.GoogleId].Value  <- stock |> DataProviderStock.get DataProvider.Google |> stockId
+        gridRow.Cells.[Columns.Google].Value    <- stock |> DataProviderStock.get DataProvider.Google |> symbol
 
       member form.Securities
         with get () = !securities

@@ -6,9 +6,6 @@ open HardRightEdge.Services.Repositories
 open HardRightEdge.Services.Infrastructure
 open HardRightEdge.Services.Infrastructure.Common
 
-open RDotNet
-open RProvider
-
 module DomainServices =
 
   open HardRightEdge.Services.Integration.Yahoo
@@ -37,9 +34,16 @@ module DomainServices =
     StockRepository.save x
 
   module DataProviderStock =
-  
+    
+    let get dataProvider stock = Seq.tryFind (fun dps -> dps.dataProvider = dataProvider) stock.dataProviders
+
     // Find the stockId of the DataProviderStock with the specified DataProvider type.
-    let stockId dataProvider (stocks: DataProviderStock seq) = 
-      match Seq.tryFind (fun dps -> dps.dataProvider = dataProvider) stocks with
+    let stockId stock = 
+      match stock with
       | Some s -> toNullable s.stockId
-      | _ -> new System.Nullable<int64>()
+      | _ -> new Nullable<int64>()
+
+    let symbol stock =
+      match stock with
+      | Some s -> s.symbol
+      | _ -> null
