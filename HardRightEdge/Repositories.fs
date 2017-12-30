@@ -11,23 +11,23 @@ open HardRightEdge.Infrastructure.Common
 
 module ShareRepository =
 
-  let private saveDataProviderShare (share: DataProviderShare) =
+  let private saveSharePlatform (share: SharePlatform) =
     use db = new Db ()
-    use cmd = db?Sql <- "UPDATE                 DataProviderShare
+    use cmd = db?Sql <- "UPDATE                 SharePlatform
                         SET                     symbol = :symbol
-                        WHERE                   shareId = :shareId
-                        AND                     dataProviderId = :dataProviderId;
+                        WHERE                   share_id = :share_id
+                        AND                     platform_id = :platform_id;
 
-                        INSERT OR IGNORE INTO   DataProviderShare
-                                                ( shareId,
-                                                  dataProviderId,
+                        INSERT OR IGNORE INTO   SharePlatform
+                                                ( share_id,
+                                                  platform_id,
                                                   symbol )
-                        VALUES                  ( :shareId,
-                                                  :dataProviderId,
+                        VALUES                  ( :share_id,
+                                                  :platform_id,
                                                   :symbol )"
     db.Open()
-    cmd?shareId <- share.shareId
-    cmd?dataProviderId <- int share.dataProvider
+    cmd?share_id <- share.shareId
+    cmd?platform_id <- int share.platform
     cmd?symbol <- share.symbol
     cmd.ExecuteNonQuery () |> ignore
     share
@@ -40,7 +40,7 @@ module ShareRepository =
 
         use db = new Db()
         use cmd = db?Sql <- "SELECT   id,
-                                      shareId,
+                                      share_id,
                                       date,
                                       openp,
                                       high,
@@ -49,14 +49,14 @@ module ShareRepository =
                                       volume,
                                       adjClose
                             FROM      SharePrice
-                            WHERE     shareId = :shareId
+                            WHERE     share_id = :share_id
                             AND       (:id IS NULL
                             OR        id < :id)
                             ORDER BY  id DESC
                             LIMIT     1"
 
         db.Open()
-        cmd?shareId <- unwrap shareId
+        cmd?share_id <- unwrap shareId
         cmd?id <- match sharePrice with
                   | Some { id = Some id' } -> unwrap id'
                   | _ -> null
@@ -65,7 +65,7 @@ module ShareRepository =
         if rdr.Read()
         then          
           let sharePrice = { id        = Some rdr?id;
-                             shareId   = Some rdr?shareId;
+                             shareId   = Some rdr?share_id;
                              date      = rdr?date;
                              openp     = rdr?openp;
                              high      = rdr?high;
@@ -81,14 +81,14 @@ module ShareRepository =
    
   let private updateShare (share: Share) =
     use db = new Db ()
-    use cmd = db?Sql <- "UPDATE Share
+    use cmd = db?Sql <- "UPDATE share
                           SET name = :name,
-                              previousName = (SELECT name FROM Share WHERE id = 1 LIMIT 1)
+                              previous_name = (SELECT name FROM share WHERE id = 1 LIMIT 1)
                           where id = :id
                           and name <> :name;
                           
-                          SELECT  previousName 
-                          FROM    Share 
+                          SELECT  previous_name 
+                          FROM    share 
                           WHERE   id = :id;"
 
     db.Open ()
@@ -111,13 +111,13 @@ module ShareRepository =
                                           volume Volume,
                                           adjClose Adjusted
                                   FROM    SharePrice
-                                  WHERE   shareId = %i" idVal) |> ignore
+                                  WHERE   share_id = %i" idVal) |> ignore
       id
      | _ -> id
     
   let insertShare (share: Share) =
     use db = new Db ()
-    use cmd = db?Sql <- "INSERT INTO  Share
+    use cmd = db?Sql <- "INSERT INTO  share
                                       ( name )
                         VALUES        ( :name );
 
@@ -141,11 +141,11 @@ module ShareRepository =
 
     let savedShare = { share with 
                         id = shareId;
-                        dataProviders = [| for dataProviderShare in share.dataProviders ->
-                                            saveDataProviderShare { dataProviderShare with shareId = shareId } |] }
+                        platforms = [| for sharePlatform in share.platforms ->
+                                          saveSharePlatform { sharePlatform with shareId = shareId } |] }
     use db = new Db ()
     use cmd = db?Sql <- "INSERT INTO  SharePrice 
-                                      ( shareId, 
+                                      ( share_id, 
                                         date, 
                                         openp, 
                                         high, 
@@ -153,7 +153,7 @@ module ShareRepository =
                                         close, 
                                         volume, 
                                         adjClose  ) 
-                          VALUES      ( :shareId, 
+                          VALUES      ( :share_id, 
                                         :date, 
                                         :openp, 
                                         :high, 
@@ -164,7 +164,7 @@ module ShareRepository =
     
     db.Open ()
     for price in share.prices do
-      cmd?shareId <- shareId
+      cmd?share_id <- shareId
       cmd?date <- price.date
       cmd?openp <- price.openp
       cmd?high <- price.high
@@ -176,22 +176,22 @@ module ShareRepository =
     
     savedShare
 
-  let get (id: int64) =
+  let getShare (id: int64) =
     // TODO: Adapt the following code to work with multiple 
-    // DataProviders, that will cause a Share to be returned 
-    // for each DataProvider.
+    // Platforms, that will cause a Share to be returned 
+    // for each Platform.
 
     use db = new Db()
-    use cmd = db?Sql <- "SELECT     Share.id,
+    use cmd = db?Sql <- "SELECT     share.id,
                                     name,
-                                    previousName,
-                                    dataProviderId,
+                                    previous_name,
+                                    platform_id,
                                     symbol
-                          FROM      Share
-                          LEFT JOIN DataProviderShare
-                          ON        DataProviderShare.shareId = Share.id
-                          WHERE     Share.id = :id
-                          ORDER BY  Share.id"
+                          FROM      share
+                          LEFT JOIN share_platform
+                          ON        share_platform.share_id = share.id
+                          WHERE     share.id = :id
+                          ORDER BY  share.id"
     cmd?id <- id
 
     db.Open()
@@ -199,12 +199,12 @@ module ShareRepository =
 
     if rdr.Read()
     then Some { id = Some rdr?id
-                name = rdr?name
-                previousName = rdr?previousName
+                name = "" // rdr?name
+                previousName = Some "" //rdr?previous_name
                 // TODO: Call ShareRepository.getSharePriceByShare 1L |> Seq.take 1 |> Seq.toList
                 // This will only include the latest share price.
                 // The AppService can then fetch all new prices from this one until today
                 // and save them.
-                prices = [ (Seq.head (getSharePriceByShare id)) ]
-                dataProviders = Seq.empty<DataProviderShare> }
+                prices = [] // [ (Seq.head (getSharePriceByShare id)) ]
+                platforms = Seq.empty<SharePlatform> }
     else None

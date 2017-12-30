@@ -19,13 +19,13 @@ type SharePrice = {
   adjClose:   double;
   volume:     int64 }
 
-type DataProvider =
+type Platform =
 | Yahoo = 1
 | Google = 2
 
-type DataProviderShare = {
+type SharePlatform = {
   shareId: int64 option; 
-  dataProvider: DataProvider; 
+  platform: Platform; 
   symbol: string }
 
 type Share = {  
@@ -33,4 +33,4 @@ type Share = {
   name: string; 
   previousName: string option;
   prices: SharePrice list;
-  dataProviders: DataProviderShare seq; }
+  platforms: SharePlatform seq; }

@@ -43,9 +43,9 @@ module Yahoo =
         let priceHistory = priceHistoryAsync |> Async.RunSynchronously
 
         { id = None;
-          dataProviders = [| {  shareId = None;
-                                symbol = symbol.ToUpper();
-                                dataProvider = DataProvider.Yahoo } |];
+          platforms = [| {  shareId = None;
+                            symbol = symbol.ToUpper();
+                            platform = Platform.Yahoo } |];
           name = symbol.ToUpper();
           previousName = None;
           prices = [ for price in priceHistory do
