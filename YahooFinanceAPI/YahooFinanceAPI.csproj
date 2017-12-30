@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">  
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--<Compile Include="Historical.cs" />
+    <Compile Include="Models\Dividend.cs" />
+    <Compile Include="Models\HistoryPrice.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Token.cs" />-->
+  </ItemGroup>
+</Project>

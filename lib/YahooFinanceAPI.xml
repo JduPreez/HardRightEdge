@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>YahooFinanceAPI</name>
+    </assembly>
+    <members>
+        <member name="T:YahooFinanceAPI.Historical">
+             <summary>
+             Class for fetching stock historical price from Yahoo Finance
+             Copyright Dennis Lee
+             3 Nov 2017
+            
+             </summary>
+        </member>
+        <member name="M:YahooFinanceAPI.Historical.GetPriceAsync(System.String,System.DateTime,System.DateTime)">
+            <summary>
+            Get stock historical price from Yahoo Finance
+            </summary>
+            <param name="symbol">Stock ticker symbol</param>
+            <param name="start">Starting datetime</param>
+            <param name="end">Ending datetime</param>
+            <returns>List of history price</returns>
+        </member>
+        <member name="M:YahooFinanceAPI.Historical.GetDividendAsync(System.String,System.DateTime,System.DateTime)">
+            <summary>
+            Get stock historical dividends from Yahoo Finance
+            </summary>
+            <param name="symbol">Stock ticker symbol</param>
+            <param name="start">Starting datetime</param>
+            <param name="end">Ending datetime</param>
+            <returns>List of dividends</returns>
+        </member>
+        <member name="M:YahooFinanceAPI.Historical.GetRawAsync(System.String,System.DateTime,System.DateTime,System.String)">
+            <summary>
+            Get raw stock historical price from Yahoo Finance
+            </summary>
+            <param name="symbol">Stock ticker symbol</param>
+            <param name="start">Starting datetime</param>
+            <param name="end">Ending datetime</param>
+            <param name="eventType">Event type (e.g: history, div)</param>
+            <returns>Raw history price string</returns>
+        </member>
+        <member name="M:YahooFinanceAPI.Historical.ParsePriceAsync(System.String)">
+            <summary>
+            Parse raw historical price data into list
+            </summary>
+            <param name="csvData"></param>
+            <returns>List of historical price</returns>
+        </member>
+        <member name="M:YahooFinanceAPI.Historical.ParseDivAsync(System.String)">
+            <summary>
+            Parse raw dividend data into list
+            </summary>
+            <param name="csvData"></param>
+            <returns>List of dividends</returns>
+        </member>
+        <member name="T:YahooFinanceAPI.Token">
+             <summary>
+             Class for fetching token (cookie and crumb) from Yahoo Finance
+             Copyright Dennis Lee
+             3 Nov 2017
+            
+             </summary>
+        </member>
+        <member name="M:YahooFinanceAPI.Token.RefreshAsync(System.String)">
+            <summary>
+            Refresh cookie and crumb value
+            </summary>
+            <param name="symbol">Stock ticker symbol</param>
+            <returns></returns>
+        </member>
+        <member name="M:YahooFinanceAPI.Token.GetCrumbAsync(System.String)">
+            <summary>
+            Get crumb value from HTML
+            </summary>
+            <param name="html">HTML code</param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
