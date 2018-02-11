@@ -57,4 +57,4 @@ module Yahoo =
                                 low = price.Low;
                                 close = price.Close; 
                                 volume = price.Volume |> int64;
-                                adjClose = price.AdjClose } ] }
+                                adjClose = Some price.AdjClose } ] }

@@ -7,14 +7,19 @@ open System.Data
 open System.Data.Common
 open Npgsql
 open HardRightEdge.Infrastructure.Common
-
+open Microsoft.FSharp.Core.Operators.Unchecked
 
 type DynamicDbDataReader (reader:NpgsqlDataReader) =
 
   member private me.Reader = reader
   member me.Read() = reader.Read()
+
   static member (?) (dr:DynamicDbDataReader, name:string) : 'R =
-    unbox (dr.Reader.[name])
+    let colIndex = dr.Reader.GetOrdinal(name)
+    
+    if dr.Reader.IsDBNull(colIndex)
+    then defaultof<'R>
+    else unbox (dr.Reader.[name])
 
   member me.HasRows
     with get () = reader.HasRows
@@ -31,8 +36,8 @@ type DynamicDbCommand (cmd:NpgsqlCommand) =
     // the "else ..." part too.
     if cmd.Command.Parameters.Contains(name) then        
       cmd.Command.Parameters.RemoveAt(name)
-    
-    cmd.Command.Parameters.Add(NpgsqlParameter(name, unwrap value)) |> ignore       
+
+    cmd.Command.Parameters.Add(NpgsqlParameter(name, unwrap value |> toDbNull)) |> ignore       
 
   member me.ExecuteNonQuery() = cmd.ExecuteNonQuery()
 
@@ -66,7 +71,7 @@ type Db (conn: NpgsqlConnection) =
 
   new () = new Db(Db.Name)
 
-  new (dbName: string) = new Db(new NpgsqlConnection(sprintf "Host=localhost;Port=5432;Username=investments_app;Password=password1;Database=%s" Db.Name))
+  new (dbName: string) = new Db(new NpgsqlConnection(sprintf "Host=localhost;Port=5432;Username=investments_app;Password=password1;Database=%s;Enlist=true" Db.Name))
   
   interface IDisposable with
       member me.Dispose() = conn.Dispose()

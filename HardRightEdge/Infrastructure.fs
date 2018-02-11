@@ -14,6 +14,8 @@ module Common =
 
   let toNullable option = match option with None -> System.Nullable() | Some v -> System.Nullable(v) 
 
+  let toDbNull obj = match obj with null -> box DBNull.Value | _ -> obj
+
   /// <remarks>
   /// Derived from http://stackoverflow.com/questions/6289761/how-to-downcast-from-obj-to-optionobj.
   /// </remarks>
@@ -25,9 +27,8 @@ module Common =
 
       let objTyp = o.GetType()
       let v = objTyp.GetProperty("Value")
-      if objTyp.IsGenericType && objTyp.GetGenericTypeDefinition() = opTyp then
-        if o = null then null
-        else v.GetValue(o, [| |])
+      if objTyp.IsGenericType && objTyp.GetGenericTypeDefinition() = opTyp 
+      then v.GetValue(o, [| |])
       else o
 
 module Concurrent =
@@ -42,3 +43,32 @@ module Concurrent =
         | true -> raise t.Exception
         | arg -> ()
     task.ContinueWith continuation |> Async.AwaitTask
+
+module UnitOfWork =
+
+  open System.Transactions
+
+  type UnitOfWorkBuilder(isDurable) =
+    let isDurable = isDurable
+    
+    member this.Bind(v, func) = Option.bind func v
+
+    member this.Return(v) = Some v
+
+    member this.ReturnFrom(v) = v
+
+    member this.Zero() = this.Return ()
+
+    member this.Delay(func) = func
+
+    member this.Run(func) =
+      use txScope = new TransactionScope()      
+      let result = func()
+
+      if isDurable 
+      then txScope.Complete()
+
+      result
+
+  let durable = new UnitOfWorkBuilder(true)
+  let temp = new UnitOfWorkBuilder(false)

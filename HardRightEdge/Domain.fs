@@ -16,7 +16,7 @@ type SharePrice = {
   high:       double; 
   low:        double;
   close:      double;
-  adjClose:   double;
+  adjClose:   float option;
   volume:     int64 }
 
 type Platform =

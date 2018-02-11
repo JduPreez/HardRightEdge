@@ -23,4 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\YahooFinanceAPI\YahooFinanceAPI.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Transactions" />
+  </ItemGroup>
 </Project>

@@ -4,13 +4,14 @@ open System
 open System.Net
 open System.Data.Common
 open Option
+open Microsoft.FSharp.Core.Operators.Unchecked
 
 open HardRightEdge.Domain
 open HardRightEdge.Data
 open HardRightEdge.Infrastructure.Common
 
 module ShareRepository =
-
+    
   let private saveSharePlatform (share: SharePlatform) =
     use db = new Db ()
     use cmd = db?Sql <- "UPDATE                 SharePlatform
@@ -47,8 +48,8 @@ module ShareRepository =
                                       low,
                                       close,
                                       volume,
-                                      adjClose
-                            FROM      SharePrice
+                                      adj_close
+                            FROM      share_price
                             WHERE     share_id = :share_id
                             AND       (:id IS NULL
                             OR        id < :id)
@@ -71,7 +72,7 @@ module ShareRepository =
                              high      = rdr?high;
                              low       = rdr?low;
                              close     = rdr?close;
-                             adjClose  = rdr?adjClose;
+                             adjClose  = rdr?adj_close;
                              volume    = rdr?volume }
 
           yield! getSharePriceByShare' shareId (Some sharePrice)
@@ -79,41 +80,19 @@ module ShareRepository =
 
     getSharePriceByShare' shareId None
    
-  let private updateShare (share: Share) =
+  let updateShare (share: Share) =
     use db = new Db ()
     use cmd = db?Sql <- "UPDATE share
                           SET name = :name,
-                              previous_name = (SELECT name FROM share WHERE id = 1 LIMIT 1)
-                          where id = :id
-                          and name <> :name;
-                          
-                          SELECT  previous_name 
-                          FROM    share 
-                          WHERE   id = :id;"
+                              previous_name = :previous_name
+                          where id = :id"
 
     db.Open ()
     cmd?name <- share.name
     cmd?id <- share.id
-    let s = { share with previousName = ofObj(cmd.ExecuteScalar<string> ()) }
-    s
-
-  let private toShareViewName (name: string) = name.Replace (".", "_")
-
-  let private createShareView name (id: int64 option) =
-    match id with
-    | Some idVal ->
-      DbAdmin.createView (toShareViewName name)
-                        (sprintf "SELECT  strftime('%%s', date) row_names,
-                                          openp Open,
-                                          high High,
-                                          low Low,
-                                          close Close,
-                                          volume Volume,
-                                          adjClose Adjusted
-                                  FROM    SharePrice
-                                  WHERE   share_id = %i" idVal) |> ignore
-      id
-     | _ -> id
+    cmd?previous_name <- share.previousName
+    cmd.ExecuteNonQuery () |> ignore
+    share
     
   let insertShare (share: Share) =
     use db = new Db ()
@@ -124,27 +103,18 @@ module ShareRepository =
                         SELECT CURRVAL(pg_get_serial_sequence('Share','id'));"
     db.Open ()
     cmd?name <- share.name
-    Some (unbox<int64> (cmd.ExecuteScalar()))
+    { share with id = Some (unbox<int64> (cmd.ExecuteScalar())) }
 
-  let save share =
-    
-    let shareId = match share with
-                  | { id = Some sId } -> 
-                    match updateShare share with
-                    | { id = id'; name = nam; previousName = Some prevName } when prevName <> share.name -> 
-                      // Name changed, therefore drop & recreate View
-                      toShareViewName >> DbAdmin.dropView <| prevName |> ignore
-                      createShareView nam id'
-                    | _ -> share.id
+  let saveShare share =
+    let shr = match share with
+              | { id = Some sId } -> updateShare share
+              | _                 -> insertShare share
 
-                  | _ -> insertShare >> createShareView share.name <| share
-
-    let savedShare = { share with 
-                        id = shareId;
+    let savedShare = {  shr with                        
                         platforms = [| for sharePlatform in share.platforms ->
-                                          saveSharePlatform { sharePlatform with shareId = shareId } |] }
+                                          saveSharePlatform { sharePlatform with shareId = shr.id } |] }
     use db = new Db ()
-    use cmd = db?Sql <- "INSERT INTO  SharePrice 
+    use cmd = db?Sql <- "INSERT INTO  share_price 
                                       ( share_id, 
                                         date, 
                                         openp, 
@@ -152,7 +122,7 @@ module ShareRepository =
                                         low, 
                                         close, 
                                         volume, 
-                                        adjClose  ) 
+                                        adj_close  ) 
                           VALUES      ( :share_id, 
                                         :date, 
                                         :openp, 
@@ -160,18 +130,18 @@ module ShareRepository =
                                         :low, 
                                         :close, 
                                         :volume, 
-                                        :adjClose )"
+                                        :adj_close )"
     
     db.Open ()
     for price in share.prices do
-      cmd?share_id <- shareId
+      cmd?share_id <- shr.id
       cmd?date <- price.date
       cmd?openp <- price.openp
       cmd?high <- price.high
       cmd?low <- price.low
       cmd?close <- price.close
       cmd?volume <- price.volume
-      cmd?adjClose <- price.adjClose            
+      cmd?adj_close <- price.adjClose            
       cmd.ExecuteNonQuery() |> ignore
     
     savedShare
@@ -199,8 +169,8 @@ module ShareRepository =
 
     if rdr.Read()
     then Some { id = Some rdr?id
-                name = "" // rdr?name
-                previousName = Some "" //rdr?previous_name
+                name = rdr?name
+                previousName = rdr?previous_name
                 // TODO: Call ShareRepository.getSharePriceByShare 1L |> Seq.take 1 |> Seq.toList
                 // This will only include the latest share price.
                 // The AppService can then fetch all new prices from this one until today
