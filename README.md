@@ -1,8 +1,8 @@
 # HardRightEdge
 
-HardRightEdge is a investment portfolio management toolset written in F#. It imports your trades from Saxo and EasyEquities trade files (support for other brokers will be added as needed or requested), and market data from Yahoo Finance into a PostgreSQL database.
+HardRightEdge is an investment portfolio management toolset written in F#. It imports your trades from Saxo and EasyEquities trade files (support for other brokers will be added as needed or requested), and market data from Yahoo Finance into a PostgreSQL database.
 
-Then it provides a bunch of Open R statistics, and various F# FsLab scripts (https://fslab.org/) to analyse and visualise your porfolio performance.
+From there it provides a bunch of Open R statistics, and various F# FsLab scripts (https://fslab.org/) to analyse and visualise your porfolio performance.
 
 ## Requirements
 
