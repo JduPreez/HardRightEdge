@@ -105,7 +105,7 @@ module ShareRepository =
     cmd?name <- share.name
     { share with id = Some (unbox<int64> (cmd.ExecuteScalar())) }
 
-  let saveShare share =
+  let saveShare (share: Share) =
     let shr = match share with
               | { id = Some sId } -> updateShare share
               | _                 -> insertShare share
@@ -168,13 +168,20 @@ module ShareRepository =
     use rdr = cmd.ExecuteReader()
 
     if rdr.Read()
-    then Some { id = Some rdr?id
-                name = rdr?name
-                previousName = rdr?previous_name
+    then Some { id            = Some rdr?id
+                name          = rdr?name
+                currency      = None
+                previousName  = rdr?previous_name
                 // TODO: Call ShareRepository.getSharePriceByShare 1L |> Seq.take 1 |> Seq.toList
                 // This will only include the latest share price.
                 // The AppService can then fetch all new prices from this one until today
                 // and save them.
-                prices = [] // [ (Seq.head (getSharePriceByShare id)) ]
-                platforms = Seq.empty<SharePlatform> }
+                prices        = [] // [ (Seq.head (getSharePriceByShare id)) ]
+                platforms     = Seq.empty<SharePlatform> }
     else None
+
+// This is for the DB
+// Integration.Saxo is for the Excel
+module TransactionRepository =
+
+  let x = 5

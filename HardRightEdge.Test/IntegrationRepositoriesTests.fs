@@ -11,6 +11,7 @@ module Common =
                     name = "GSK"
                     previousName = None
                     prices = []
+                    currency = None
                     platforms = Seq.empty<SharePlatform> }
 
   let insertShare () = ShareRepository.insertShare testShare
@@ -46,14 +47,13 @@ let ``ShareRepository should updateShare`` () =
     | _                 -> Assert.True(false)
   }
 
-
 [<Fact>]
 let ``ShareRepository should getShare`` () =
   UnitOfWork.temp {
     match Common.insertShare () with
     | { id = Some sid } ->  match (ShareRepository.getShare sid) with
-                          | Some _  -> Assert.True(true)
-                          | _       -> Assert.True(false)
+                            | Some _  -> Assert.True(true)
+                            | _       -> Assert.True(false)
     | _       -> Assert.True(false)
   }
 
@@ -73,5 +73,3 @@ let ``ShareRepository should saveShare with prices`` () =
     | { id = Some _ } -> Assert.True(true)
     | _               -> Assert.True(false)
   }
-
-// TODO: Wrap in SQL transactions, to rollback data

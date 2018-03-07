@@ -72,3 +72,16 @@ module UnitOfWork =
 
   let durable = new UnitOfWorkBuilder(true)
   let temp = new UnitOfWorkBuilder(false)
+
+module FileSystem =
+
+  open System.IO
+  open System.Collections.Generic
+
+  let (+/) path1 path2 = Path.Combine(path1, path2)
+
+  let isDir path = (File.GetAttributes(path) ||| FileAttributes.Directory) = FileAttributes.Directory
+
+  let files path searchPattern =  if isDir path
+                                  then Directory.EnumerateFiles(path, searchPattern)
+                                  else List.empty<string> :> seq<string>

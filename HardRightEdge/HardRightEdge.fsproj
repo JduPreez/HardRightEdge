@@ -18,6 +18,12 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Imports\**\*.*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ExcelPackageF" Version="1.0.5" />
     <PackageReference Include="Npgsql" Version="3.2.6" />
   </ItemGroup>
   <ItemGroup>

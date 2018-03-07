@@ -29,14 +29,18 @@ module Yahoo =
 
       let private toDte = queryDate DateTime.Now
 
-      let getSharePrices symbol (from: DateTime) (to': unit -> DateTime) =
+      let getSharePrices symbol (from: DateTime option) =
         
         while String.IsNullOrEmpty(Token.Cookie) || String.IsNullOrEmpty(Token.Crumb) do
           awaitPlainTask (Token.RefreshAsync()) |> ignore        
 
         let priceHistoryAsync = async {
-                              let toVal = to'()
-                              let! priceHistory = Historical.GetPriceAsync(symbol, from, toVal) |> Async.AwaitTask
+                              let to' = DateTime.Now
+                              let from' = if from.IsSome 
+                                          then from.Value
+                                          else DateTime.Now.AddYears(-1)
+                                          
+                              let! priceHistory = Historical.GetPriceAsync(symbol, from', to') |> Async.AwaitTask
                               return priceHistory
                             }
 
@@ -48,6 +52,7 @@ module Yahoo =
                             platform = Platform.Yahoo } |];
           name = symbol.ToUpper();
           previousName = None;
+          currency = None;
           prices = [ for price in priceHistory do
                         yield { id = None;
                                 shareId = None;
@@ -58,3 +63,35 @@ module Yahoo =
                                 close = price.Close; 
                                 volume = price.Volume |> int64;
                                 adjClose = Some price.AdjClose } ] }
+
+let importsRoot = "Imports"
+
+module Saxo =
+  open ExcelPackageF
+  open HardRightEdge.Infrastructure.FileSystem
+  open HardRightEdge.Domain
+
+  module SaxoFiles =
+    trades = "Trades_*.xlsx"
+
+  let getTradesByStatus isOpen = 
+    match box (query {
+      for fl in files (importsRoot +/ "Saxo") SaxoFiles.trades do
+        select fl
+        headOrDefault }) with
+    | :? string as tradesXlsx -> 
+
+      // TODO:
+      // 1. Read file: TradeId, AccountID, Instrument, TradeTime, B/S, OpenClose, Amount, Price
+      // 2. Split trades into open & closed transactions
+      // 3. leftOuterJoin closed transactions onto open transactions
+      //    on Instrument & Amount (make sure to * -1 negative amounts to make them positive)
+      // 4. Rows where the closed transaction in the join is null, are the remaining ones
+
+      seq { for row in tradesXlsx
+                        |> Excel.getWorksheetByIndex 1
+                        |> Excel.getContent -> }
+      
+
+
+    | null -> Seq.empty<Trade>
