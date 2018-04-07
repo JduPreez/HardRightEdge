@@ -19,10 +19,33 @@ type SharePrice = {
   adjClose:   float option
   volume:     int64 }
 
+let idIs (symbol: string) (id: int) = 
+  let mapToId id' = 
+    if symbol.ToUpper() = symbol then Some id' else None
+  mapToId
 
-type Currency =
-| SGD of string
+type CurrencyType =
+| USD of int * string 
+| EUR of int * string
+| GBP of int * string
+| SGD of int * string
+| DKK of int * string
 
+module Currency =
+  let USD = CurrencyType.USD(1, "USD")
+  let EUR = CurrencyType.EUR(2, "EUR")
+  let GBP = CurrencyType.GBP(3, "GBP")
+  let SGD = CurrencyType.SGD(4, "SGD")
+  let DKK = CurrencyType.DKK(5, "DKK")
+
+let currency symbol =
+  match symbol with
+  | "USD" as x -> Currency.USD
+  | "EUR" as x -> Currency.EUR
+  | "GBP" as x -> Currency.GBP
+  | "SGD" as x -> Currency.SGD
+  | "DKK" as x -> Currency.DKK
+ 
 type Platform =
 | Yahoo   = 1
 | Google  = 2
@@ -39,10 +62,10 @@ type Share = {
   previousName: string option
   prices:       SharePrice list
   platforms:    SharePlatform seq
-  currency:     Currency option }
+  currency:     CurrencyType option }
 
 type Security =
-| Shares = 1
+| Share = 1
 
 type CorporateAction =
 | DividendCash = 2
@@ -71,7 +94,7 @@ type Transaction = {
   price:          float
   amount:         float
   type':          TransactionType
-  currency:       Currency option }
+  currency:       CurrencyType option }
 
 type TradeType =
 | Bought = 1
@@ -81,9 +104,9 @@ type TradeType =
 type Trade = {
   id:           int64 option
   tradeId:      string
-  accountId:    string
+  account:      string
   type':        TradeType
   isOpen:       bool
-  shareId:      int64
+  share:        Share
   transaction:  Transaction
   commission:   Transaction option }
