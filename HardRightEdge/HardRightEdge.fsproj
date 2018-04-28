@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\fsc.props" />
   <PropertyGroup>
-    <FscToolPath>C:\Program Files (x86)\Microsoft SDKs\F#\4.1\Framework\v4.0</FscToolPath>               
+    <FscToolPath>C:\Program Files (x86)\Microsoft SDKs\F#\10.1\Framework\v4.0</FscToolPath>               
     <FscToolExe>fsc.exe</FscToolExe>
   </PropertyGroup>
   <PropertyGroup>
