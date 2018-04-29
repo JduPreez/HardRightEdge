@@ -71,7 +71,7 @@ type Db (conn: NpgsqlConnection) =
 
   new () = new Db(Db.Name)
 
-  new (dbName: string) = new Db(new NpgsqlConnection(sprintf "Host=localhost;Port=5432;Username=investments_app;Password=password1;Database=%s;Enlist=true" Db.Name))
+  new (dbName: string) = new Db(new NpgsqlConnection(sprintf "Host=localhost;Port=5432;Username=hard_right_edge_app;Password=p@ssword123;Database=%s;Enlist=true" Db.Name))
   
   interface IDisposable with
       member me.Dispose() = conn.Dispose()

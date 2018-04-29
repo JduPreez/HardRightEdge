@@ -10,6 +10,7 @@
     <TargetFramework>net461</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Excel.fs" />
     <Compile Include="Infrastructure.fs" />    
     <Compile Include="Data.fs" />
     <Compile Include="Domain.fs" />
@@ -23,13 +24,14 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ExcelPackageF" Version="1.0.5" />
+    <PackageReference Include="EPPlus" Version="4.5.1" />
     <PackageReference Include="Npgsql" Version="3.2.6" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\YahooFinanceAPI\YahooFinanceAPI.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="System.Data.Linq" />
     <Reference Include="System.Transactions" />
   </ItemGroup>
 </Project>

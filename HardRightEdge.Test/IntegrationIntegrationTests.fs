@@ -14,6 +14,11 @@ module Yahoo =
 module Saxo =
 
   [<Fact>]
-  let ``Saxo should getTrades`` () =
-    let trades = Saxo.getTrades ()
+  let ``Saxo should get trades`` () =
+    let trades = Saxo.trades (fun _ -> true) |> Seq.toList // Just get all trades
+    Assert.NotEmpty(trades)
+
+  [<Fact>]
+  let ``Saxo should get open trades`` () =
+    let trades = Saxo.tradesOpen () |> Seq.toList
     Assert.NotEmpty(trades)

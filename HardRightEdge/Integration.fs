@@ -1,8 +1,6 @@
 module HardRightEdge.Integration
 
 open System
-open System.Threading
-open System.Threading.Tasks
 open YahooFinanceAPI
 open HardRightEdge.Domain
 open HardRightEdge.Infrastructure.Concurrent
@@ -67,10 +65,10 @@ module Yahoo =
 let importsRoot = "Imports"
 
 module Saxo =
-  open ExcelPackageF
   open HardRightEdge.Infrastructure.Common
   open HardRightEdge.Infrastructure.FileSystem
-  open HardRightEdge.Domain
+  open System.Linq
+  open Unchecked
 
   module Trades =
     let filePattern = "Trades_*.xlsx"
@@ -80,15 +78,15 @@ module Saxo =
     currency (accountId.ToUpper().Substring(accountId.Length - 3)) |> Some
 
   let shareCurrency (symbol: string) =
-    match symbol.ToLower().Split([|':'|]).[1] with
-    | "xnas" | "xnys" -> Currency.USD |> Some
+    match symbol.ToLower().Split([|':'|]).[1] with    
     | "xlon"          -> Currency.GBP |> Some
     | "xses"          -> Currency.SGD |> Some
     | "xetr"          -> Currency.EUR |> Some
     | "xcse"          -> Currency.DKK |> Some
+    | _               -> Currency.USD |> Some // Default to usd
 
   let toTrade (row: string seq) =
-    match row |> List.ofSeq with
+    match row |> Seq.take 12 |> List.ofSeq with
     | [ tradeId'; 
         accountId;
         instrument; 
@@ -100,37 +98,35 @@ module Saxo =
         tradedVal; 
         spreadCosts; 
         bookedAmount;
-        symbol';
-        _ ] -> Some { 
-                      id          = None
-                      tradeId     = tradeId'
-                      account     = accountId
-                      type'       = match buyOrSell.ToLower() with
-                                    | "bought"  -> TradeType.Bought
-                                    | "sold"    -> TradeType.Sold
-                                    | _         -> TradeType.TransferIn
-                      isOpen      = openOrClose.ToLower() = "open"
-                      commission  = None
-                      share       = { id            = None
-                                      name          = instrument 
-                                      previousName  = None
-                                      prices        = []
-                                      platforms     = seq [ { shareId   = None; 
-                                                              platform  = Platform.Saxo; 
-                                                              symbol    = symbol' } ]
-                                      currency      = symbol' |> shareCurrency }
-                      transaction   = { id              = None
-                                        quantity        = Some(int64 amount)
-                                        date            = tradeTime |> toDateTime Trades.datePattern
-                                        valueDate       = None
-                                        settlementDate  = None
-                                        price           = float price'
-                                        amount          = float bookedAmount
-                                        type'           = Security(Security.Share)
-                                        currency        = accountId |> accountCurrency }}
-    | [] -> None
+        symbol' ] -> Some { id          = None
+                            tradeId     = tradeId'
+                            account     = accountId
+                            type'       = match buyOrSell.ToLower() with
+                                          | "bought"  -> TradeType.Bought
+                                          | "sold"    -> TradeType.Sold
+                                          | _         -> TradeType.TransferIn
+                            isOpen      = openOrClose.ToLower() = "open"
+                            commission  = None
+                            share       = { id            = None
+                                            name          = instrument 
+                                            previousName  = None
+                                            prices        = []
+                                            platforms     = seq [ { shareId   = None; 
+                                                                    platform  = Platform.Saxo; 
+                                                                    symbol    = symbol' } ]
+                                            currency      = symbol' |> shareCurrency }
+                            transaction   = { id              = None
+                                              quantity        = Some(int64 amount)
+                                              date            = DateTime.Now //tradeTime |> toDateTime Trades.datePattern
+                                              valueDate       = None
+                                              settlementDate  = None
+                                              price           = 0.0 //float price'
+                                              amount          = 0.0 //float bookedAmount
+                                              type'           = Security(Security.Share)
+                                              currency        = accountId |> accountCurrency } }
+    | _ -> None
 
-  let getTrades () = 
+  let trades predicate = 
     match box (query {
       for fl in files (importsRoot +/ "Saxo") Trades.filePattern do
         select fl
@@ -146,9 +142,26 @@ module Saxo =
       let worksheet   = Excel.getWorksheetByIndex 2 tradesFile // Trades with additional info
       let maxRow      = Excel.getMaxRowNumber worksheet
 
-      seq { for row in 1 .. maxRow ->
-              worksheet 
-              |> Excel.getRow row
-              |> toTrade }
+      seq { for row in 2 .. maxRow do              
+              let trade = worksheet 
+                          |> Excel.getRow row 
+                          |> toTrade
+
+              if (predicate trade) then yield trade.Value }
               
-    | null -> Seq.empty<Trade option>
+    | _ -> Seq.empty<Trade>
+
+  let tradesOpen () =
+    query {
+      for openTrade in trades             (fun t -> t.IsSome && 
+                                                    t.Value.isOpen && 
+                                                    t.Value.transaction.quantity.IsSome) do
+      leftOuterJoin closedTrade in trades (fun t -> t.IsSome && 
+                                                    t.Value.isOpen && 
+                                                    t.Value.type' = TradeType.Sold &&
+                                                    t.Value.transaction.quantity.IsSome)
+          on ((openTrade.share.name, openTrade.transaction.quantity.Value) = (closedTrade.share.name, (abs closedTrade.transaction.quantity.Value))) 
+          into result
+      for closedTrade in result.DefaultIfEmpty() do
+      where (closedTrade = defaultof<Trade>)
+      select openTrade }
