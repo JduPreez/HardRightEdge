@@ -10,28 +10,27 @@ open HardRightEdge.Domain
 open HardRightEdge.Data
 open HardRightEdge.Infrastructure.Common
 
-module ShareRepository =
+module Shares =
     
-  let private saveSharePlatform (share: SharePlatform) =
+  let private saveSharePlatform (sharePlatform: SharePlatform) =
     use db = new Db ()
-    use cmd = db?Sql <- "UPDATE                 SharePlatform
-                        SET                     symbol = :symbol
-                        WHERE                   share_id = :share_id
-                        AND                     platform_id = :platform_id;
-
-                        INSERT OR IGNORE INTO   SharePlatform
-                                                ( share_id,
-                                                  platform_id,
-                                                  symbol )
-                        VALUES                  ( :share_id,
-                                                  :platform_id,
-                                                  :symbol )"
+    use cmd = db?Sql <- "INSERT INTO    share_platform
+                                        ( share_id,
+                                          platform_id,
+                                          symbol )
+                        VALUES          ( :share_id,
+                                          :platform_id,
+                                          :symbol )
+                        ON CONFLICT     ( share_id,
+                                          platform_id) 
+                        DO UPDATE          
+                        SET symbol = :symbol"
     db.Open()
-    cmd?share_id <- share.shareId
-    cmd?platform_id <- int share.platform
-    cmd?symbol <- share.symbol
-    cmd.ExecuteNonQuery () |> ignore
-    share
+    cmd?share_id            <- sharePlatform.shareId
+    cmd?platform_id         <- int sharePlatform.platform
+    cmd?symbol              <- sharePlatform.symbol
+    cmd.ExecuteNonQuery ()  |> ignore
+    sharePlatform
 
   let private getSharePriceByShare (shareId: int64) = 
     let rec getSharePriceByShare' (shareId: int64) (sharePrice: SharePrice option) =
@@ -78,9 +77,9 @@ module ShareRepository =
           yield! getSharePriceByShare' shareId (Some sharePrice)
       }
 
-    getSharePriceByShare' shareId None
-   
-  let updateShare (share: Share) =
+    getSharePriceByShare' shareId None 
+
+  let update (share: Share) =
     use db = new Db ()
     use cmd = db?Sql <- "UPDATE share
                           SET name = :name,
@@ -94,21 +93,21 @@ module ShareRepository =
     cmd.ExecuteNonQuery () |> ignore
     share
     
-  let insertShare (share: Share) =
+  let insert (share: Share) =
     use db = new Db ()
     use cmd = db?Sql <- "INSERT INTO  share
                                       ( name )
                         VALUES        ( :name );
 
-                        SELECT CURRVAL(pg_get_serial_sequence('Share','id'));"
+                        SELECT CURRVAL(pg_get_serial_sequence('share','id'));"
     db.Open ()
     cmd?name <- share.name
     { share with id = Some (unbox<int64> (cmd.ExecuteScalar())) }
 
-  let saveShare (share: Share) =
+  let save (share: Share) =
     let shr = match share with
-              | { id = Some sId } -> updateShare share
-              | _                 -> insertShare share
+              | { id = Some sId } -> update share
+              | _                 -> insert share
 
     let savedShare = {  shr with                        
                         platforms = [| for sharePlatform in share.platforms ->
@@ -146,7 +145,7 @@ module ShareRepository =
     
     savedShare
 
-  let getShare (id: int64) =
+  let get (id: int64) =
     // TODO: Adapt the following code to work with multiple 
     // Platforms, that will cause a Share to be returned 
     // for each Platform.
@@ -178,6 +177,38 @@ module ShareRepository =
                 // and save them.
                 prices        = [] // [ (Seq.head (getSharePriceByShare id)) ]
                 platforms     = Seq.empty<SharePlatform> }
+    else None
+
+  // TODO: Tests this
+  let getBySymbol symbol (platform: Platform) =
+    use db = new Db()
+    use cmd = db?Sql <- "SELECT       share.id,
+                                      share.name,
+                                      share.previous_name,
+                                      share_platform.platform_id,
+                                      share_platform.symbol
+                          FROM        share
+                          
+                          INNER JOIN  share_platform
+                          ON          share_platform.share_id = share.id
+
+                          WHERE       share_platform.symbol = :symbol
+                          AND         share_platform.platform_id = :platform_id"
+    cmd?symbol <- symbol
+    cmd?platform_id <- int platform
+
+    db.Open()
+    use rdr = cmd.ExecuteReader()
+
+    if rdr.Read()
+    then Some { id            = Some rdr?id
+                name          = rdr?name
+                currency      = None
+                previousName  = rdr?previous_name
+                prices        = []
+                platforms     = seq { yield { shareId = Some rdr?id
+                                              platform = enum rdr?platform_id
+                                              symbol = rdr?symbol } } }
     else None
 
 // This is for the DB

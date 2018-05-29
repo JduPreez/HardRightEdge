@@ -110,3 +110,23 @@ type Trade = {
   share:        Share
   transaction:  Transaction
   commission:   Transaction option }
+
+module Services =
+
+  // TODO 1: Make this work
+  let getShare symbol platform =
+    // 1. getShareBySymbol, with lastSharePrice
+    // 2. Yahoo.getSharePrices symbol (lastSharePrice+1 day)
+    // 3. Save share prices returned by Yahoo to DB
+    // 4. Now fetch all share prices for the last X years
+    // 5. Return share with shares prices from 4.
+    ()
+  
+  // TODO 2: Make this work
+  let portfolio () =
+    // 1. Get open trades
+    // 2. Group by security
+    // 3. Get shares prices for each security. If online, synch share prices for each security
+    // 4. List grouped securities, with share prices from DB
+
+    ()

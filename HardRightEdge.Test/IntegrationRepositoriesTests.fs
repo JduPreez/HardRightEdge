@@ -8,13 +8,19 @@ open HardRightEdge.Infrastructure
 
 module Common =
   let testShare = { id = None
-                    name = "GSK"
+                    name = "GlaxoSmithKline Plc"
                     previousName = None
                     prices = []
                     currency = None
-                    platforms = Seq.empty<SharePlatform> }
+                    platforms = seq { yield { shareId = None 
+                                              platform = Platform.Saxo
+                                              symbol = "GSK:xlon" }
+                                              
+                                      yield { shareId = None
+                                              platform = Platform.Yahoo
+                                              symbol = "GSK.L" } } }
 
-  let insertShare () = ShareRepository.insertShare testShare
+  let insertShare () = Shares.insert testShare
 
   let random = Random()
 
@@ -30,7 +36,7 @@ module Common =
                                         volume    = int64 (random.Next()) } } |> Seq.toList
 
 [<Fact>]
-let ``ShareRepository should insertShare`` () =
+let ``Shares should insertShare`` () =
   UnitOfWork.temp {
     match Common.insertShare () with
     | { id = Some sid } -> Assert.True(sid > 0L)
@@ -38,38 +44,49 @@ let ``ShareRepository should insertShare`` () =
   }
 
 [<Fact>]
-let ``ShareRepository should updateShare`` () =
+let ``Shares should update share`` () =
   UnitOfWork.temp {
     let share = Common.insertShare () 
 
-    match (ShareRepository.updateShare { share with previousName = Some "test" }) with
+    match (Shares.update { share with previousName = Some "test" }) with
     | { id = Some sid } -> Assert.True(true)
     | _                 -> Assert.True(false)
   }
 
 [<Fact>]
-let ``ShareRepository should getShare`` () =
+let ``ShareRepository should get share`` () =
   UnitOfWork.temp {
     match Common.insertShare () with
-    | { id = Some sid } ->  match (ShareRepository.getShare sid) with
+    | { id = Some sid } ->  match (Shares.get sid) with
                             | Some _  -> Assert.True(true)
                             | _       -> Assert.True(false)
     | _       -> Assert.True(false)
   }
 
 [<Fact>]
-let ``ShareRepository should saveShare without prices`` () =
+let ``Shares should saveShare without prices`` () =
   UnitOfWork.temp {
-    match ShareRepository.saveShare Common.testShare with
+    match Shares.save Common.testShare with
     | { id = Some _ } -> Assert.True(true)
     | _               -> Assert.True(false)
   }
 
 [<Fact>]
-let ``ShareRepository should saveShare with prices`` () =
+let ``Shares should saveShare with prices`` () =
   UnitOfWork.temp {
-    match ShareRepository.saveShare { Common.testShare 
+    match Shares.save { Common.testShare 
                                         with prices = (Common.testSharePrices None) } with
     | { id = Some _ } -> Assert.True(true)
+    | _               -> Assert.True(false)
+  }
+
+[<Fact>]
+let ``Shares should getBySymbol`` () = 
+  UnitOfWork.temp {
+    match Shares.save Common.testShare with
+    | { id = Some _; platforms = platfs } ->
+      let yahoo = Seq.find (fun p -> p.platform = Platform.Yahoo)  platfs
+      let share = Shares.getBySymbol yahoo.symbol Platform.Yahoo
+      Assert.NotEqual(None, share)
     | _               -> Assert.True(false)
   }

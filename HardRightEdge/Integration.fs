@@ -7,26 +7,6 @@ open HardRightEdge.Infrastructure.Concurrent
 
 module Yahoo = 
 
-      module Fields =
-        let shortName = "shortName"
-        let startMonth = "startMonth"
-        let startDay = "startDay"
-        let startYear = "startYear"
-        let endMonth = "endMonth"
-        let endDay = "endDay"
-        let endYear = "endYear"
-
-      type QueryDate = {  month: string;
-                          day: int }
-      
-      let private queryDate (date: DateTime) =
-        {   month = (date.Month - 1).ToString().PadLeft(2, '0');
-            day = date.Day }
-
-      let private fromDte date = queryDate date
-
-      let private toDte = queryDate DateTime.Now
-
       let getSharePrices symbol (from: DateTime option) =
         
         while String.IsNullOrEmpty(Token.Cookie) || String.IsNullOrEmpty(Token.Crumb) do
@@ -117,6 +97,7 @@ module Saxo =
                                             currency      = symbol' |> shareCurrency }
                             transaction   = { id              = None
                                               quantity        = Some(int64 amount)
+                                              // TODO: Fix this!
                                               date            = DateTime.Now //tradeTime |> toDateTime Trades.datePattern
                                               valueDate       = None
                                               settlementDate  = None
@@ -151,17 +132,20 @@ module Saxo =
               
     | _ -> Seq.empty<Trade>
 
-  let tradesOpen () =
-    query {
-      for openTrade in trades             (fun t -> t.IsSome && 
-                                                    t.Value.isOpen && 
-                                                    t.Value.transaction.quantity.IsSome) do
+  let tradesOpen () = query {
+      for openTrade in trades (fun t -> t.IsSome && 
+                                        t.Value.isOpen && 
+                                        t.Value.transaction.quantity.IsSome) do
       leftOuterJoin closedTrade in trades (fun t -> t.IsSome && 
-                                                    t.Value.isOpen && 
+                                                    not t.Value.isOpen && 
                                                     t.Value.type' = TradeType.Sold &&
                                                     t.Value.transaction.quantity.IsSome)
           on ((openTrade.share.name, openTrade.transaction.quantity.Value) = (closedTrade.share.name, (abs closedTrade.transaction.quantity.Value))) 
           into result
-      for closedTrade in result.DefaultIfEmpty() do
-      where (closedTrade = defaultof<Trade>)
+      for closedTrade in result do
+      where (box closedTrade = null)
       select openTrade }
+
+              
+
+    
