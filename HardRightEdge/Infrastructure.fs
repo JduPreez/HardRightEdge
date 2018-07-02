@@ -10,7 +10,7 @@ module Common =
 
   open System.Globalization
 
-  let ofObj value = match value with null -> None | _ -> Some value
+  let ofObj<'t when 't: equality> value = if value = Unchecked.defaultof<'t> then None else Some value
 
   let ofNullable (value:System.Nullable<'T>) =  if value.HasValue then Some value.Value else None
 
@@ -39,7 +39,6 @@ module Common =
 
 module Concurrent =
 
-  open System.Threading
   open System.Threading.Tasks
 
   let inline awaitPlainTask (task: Task) = 

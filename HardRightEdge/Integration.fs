@@ -3,26 +3,19 @@ module HardRightEdge.Integration
 open System
 open YahooFinanceAPI
 open HardRightEdge.Domain
-open HardRightEdge.Infrastructure.Concurrent
 
 module Yahoo = 
 
       let getSharePrices symbol (from: DateTime option) =
-        
-        while String.IsNullOrEmpty(Token.Cookie) || String.IsNullOrEmpty(Token.Crumb) do
-          awaitPlainTask (Token.RefreshAsync()) |> ignore        
-
-        let priceHistoryAsync = async {
-                              let to' = DateTime.Now
-                              let from' = if from.IsSome 
-                                          then from.Value
-                                          else DateTime.Now.AddYears(-1)
-                                          
-                              let! priceHistory = Historical.GetPriceAsync(symbol, from', to') |> Async.AwaitTask
-                              return priceHistory
-                            }
-
-        let priceHistory = priceHistoryAsync |> Async.RunSynchronously
+        let priceHistory = 
+          async {
+            let frm = if from = None || isNull(box from) // Strangeness where arg "from" becomes null during runtime
+                      then DateTime.Now.AddYears(-1)
+                      else from.Value
+                                            
+            return! Historical.GetPriceAsync(symbol, frm, DateTime.Now) 
+                    |> Async.AwaitTask
+          } |> Async.RunSynchronously
 
         { id = None;
           platforms = [| {  shareId = None;
@@ -31,16 +24,16 @@ module Yahoo =
           name = symbol.ToUpper();
           previousName = None;
           currency = None;
-          prices = [ for price in priceHistory do
-                        yield { id        = None
-                                shareId   = None
-                                date      = price.Date
-                                openp     = price.Open
-                                high      = price.High
-                                low       = price.Low
-                                close     = price.Close 
-                                volume    = price.Volume |> int64
-                                adjClose  = Some price.AdjClose } ] }
+          prices = [ for price in priceHistory ->
+                        { id        = None
+                          shareId   = None
+                          date      = price.Date
+                          openp     = price.Open
+                          high      = price.High
+                          low       = price.Low
+                          close     = price.Close 
+                          volume    = price.Volume |> int64
+                          adjClose  = Some price.AdjClose } ] }
 
 let importsRoot = "Imports"
 

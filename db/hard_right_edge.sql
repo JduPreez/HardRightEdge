@@ -140,7 +140,7 @@ ALTER TABLE share_platform OWNER TO hard_right_edge_app;
 --
 
 CREATE TABLE share_price (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     share_id bigint NOT NULL,
     date date NOT NULL,
     openp double precision NOT NULL,
@@ -148,7 +148,7 @@ CREATE TABLE share_price (
     low double precision NOT NULL,
     close double precision NOT NULL,
     adj_close double precision,
-    volume double precision NOT NULL
+    volume bigint NOT NULL
 );
 
 
@@ -259,7 +259,7 @@ ALTER TABLE ONLY share
 --
 
 ALTER TABLE ONLY share_platform
-    ADD CONSTRAINT share_platform_pk PRIMARY KEY (share_id, platform_id);
+    ADD CONSTRAINT share_platform_pk PRIMARY KEY (symbol, platform_id);
 
 
 --

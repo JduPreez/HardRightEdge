@@ -117,6 +117,12 @@ module Services =
   let getShare symbol platform =
     // 1. getShareBySymbol, with lastSharePrice
     // 2. Yahoo.getSharePrices symbol (lastSharePrice+1 day)
+
+    // TODO!!!!!!!!!!!!
+    // 1 & 2 is working now
+    // add them here
+    // then complete work for point 3
+
     // 3. Save share prices returned by Yahoo to DB
     // 4. Now fetch all share prices for the last X years
     // 5. Return share with shares prices from 4.

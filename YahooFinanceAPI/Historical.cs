@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Threading.Tasks;
 using YahooFinanceAPI.Models;
@@ -141,14 +142,16 @@ namespace YahooFinanceAPI
                         var cols = row.Split(',');
                         if (cols[1] == "null") continue;
 
+                        var x = cols[1];
+
                         var itm = new HistoryPrice
                         {
-                            Date = DateTime.Parse(cols[0]),
-                            Open = Convert.ToDouble(cols[1]),
-                            High = Convert.ToDouble(cols[2]),
-                            Low = Convert.ToDouble(cols[3]),
-                            Close = Convert.ToDouble(cols[4]),
-                            AdjClose = Convert.ToDouble(cols[5])
+                            Date        = DateTime.Parse(cols[0]),
+                            Open        = double.Parse(cols[1], NumberFormatInfo.InvariantInfo),
+                            High        = double.Parse(cols[2], NumberFormatInfo.InvariantInfo),
+                            Low         = double.Parse(cols[3], NumberFormatInfo.InvariantInfo),
+                            Close       = double.Parse(cols[4], NumberFormatInfo.InvariantInfo),
+                            AdjClose    = double.Parse(cols[5], NumberFormatInfo.InvariantInfo)
                         };
 
                         //fixed issue in some currencies quote (e.g: SGDAUD=X)
@@ -160,6 +163,7 @@ namespace YahooFinanceAPI
                 catch (Exception ex)
                 {
                     Debug.Print(ex.Message);
+                    throw;
                 }
 
                 return lst;

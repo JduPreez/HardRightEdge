@@ -21,10 +21,10 @@ module Shares =
                         VALUES          ( :share_id,
                                           :platform_id,
                                           :symbol )
-                        ON CONFLICT     ( share_id,
+                        ON CONFLICT     ( symbol,
                                           platform_id) 
                         DO UPDATE          
-                        SET symbol = :symbol"
+                        SET share_id = :share_id"
     db.Open()
     cmd?share_id            <- sharePlatform.shareId
     cmd?platform_id         <- int sharePlatform.platform
@@ -32,52 +32,43 @@ module Shares =
     cmd.ExecuteNonQuery ()  |> ignore
     sharePlatform
 
-  let private getSharePriceByShare (shareId: int64) = 
-    let rec getSharePriceByShare' (shareId: int64) (sharePrice: SharePrice option) =
-      seq {
-        if sharePrice.IsSome
-        then yield sharePrice.Value
+  let private getSharePriceByShare (shareId: int64) (days: int) (db: Db) =
+    use cmd = db?Sql <- (sprintf "SELECT    id,
+                                            share_id,
+                                            date,
+                                            openp,
+                                            high,
+                                            low,
+                                            close,
+                                            volume,
+                                            adj_close
+                                  FROM      share_price
+                                  WHERE     share_id = :share_id
+                                  ORDER BY  id DESC                                  
+                                  LIMIT     %i" days)
 
-        use db = new Db()
-        use cmd = db?Sql <- "SELECT   id,
-                                      share_id,
-                                      date,
-                                      openp,
-                                      high,
-                                      low,
-                                      close,
-                                      volume,
-                                      adj_close
-                            FROM      share_price
-                            WHERE     share_id = :share_id
-                            AND       (:id IS NULL
-                            OR        id < :id)
-                            ORDER BY  id DESC
-                            LIMIT     1"
+    if db.IsClosed then db.Open()
+    
+    cmd?share_id <- shareId
+    
+    use rdr = cmd.ExecuteReader()
+    if rdr.Read()
+    then          
+      Some { id       = ofObj rdr?id
+             shareId  = ofObj rdr?share_id
+             date     = rdr?date
+             openp    = rdr?openp
+             high     = rdr?high
+             low      = rdr?low
+             close    = rdr?close
+             adjClose = ofObj rdr?adj_close
+             volume   = rdr?volume }
+    else 
+      None
 
-        db.Open()
-        cmd?share_id <- unwrap shareId
-        cmd?id <- match sharePrice with
-                  | Some { id = Some id' } -> unwrap id'
-                  | _ -> null
-        
-        use rdr = cmd.ExecuteReader()
-        if rdr.Read()
-        then          
-          let sharePrice = { id        = Some rdr?id;
-                             shareId   = Some rdr?share_id;
-                             date      = rdr?date;
-                             openp     = rdr?openp;
-                             high      = rdr?high;
-                             low       = rdr?low;
-                             close     = rdr?close;
-                             adjClose  = rdr?adj_close;
-                             volume    = rdr?volume }
-
-          yield! getSharePriceByShare' shareId (Some sharePrice)
-      }
-
-    getSharePriceByShare' shareId None 
+  let private getSharePriceByShare' (shareId: int64) (days: int) =
+    use db = new Db()
+    getSharePriceByShare shareId days db
 
   let update (share: Share) =
     use db = new Db ()
@@ -106,12 +97,12 @@ module Shares =
 
   let save (share: Share) =
     let shr = match share with
-              | { id = Some sId } -> update share
-              | _                 -> insert share
+              | { id = Some _ } -> update share
+              | _               -> insert share
 
     let savedShare = {  shr with                        
-                        platforms = [| for sharePlatform in share.platforms ->
-                                          saveSharePlatform { sharePlatform with shareId = shr.id } |] }
+                          platforms = [| for sharePlatform in share.platforms ->
+                                            saveSharePlatform { sharePlatform with shareId = shr.id } |] }
     use db = new Db ()
     use cmd = db?Sql <- "INSERT INTO  share_price 
                                       ( share_id, 
@@ -129,21 +120,21 @@ module Shares =
                                         :low, 
                                         :close, 
                                         :volume, 
-                                        :adj_close )"
+                                        :adj_close );
+
+                        SELECT CURRVAL(pg_get_serial_sequence('share_price','id'));"
     
     db.Open ()
-    for price in share.prices do
-      cmd?share_id <- shr.id
-      cmd?date <- price.date
-      cmd?openp <- price.openp
-      cmd?high <- price.high
-      cmd?low <- price.low
-      cmd?close <- price.close
-      cmd?volume <- price.volume
-      cmd?adj_close <- price.adjClose            
-      cmd.ExecuteNonQuery() |> ignore
-    
-    savedShare
+    { savedShare with prices = [  for price in share.prices do
+                                    cmd?share_id  <- shr.id
+                                    cmd?date      <- price.date
+                                    cmd?openp     <- price.openp
+                                    cmd?high      <- price.high
+                                    cmd?low       <- price.low
+                                    cmd?close     <- price.close
+                                    cmd?volume    <- price.volume
+                                    cmd?adj_close <- price.adjClose                                    
+                                    yield { price with id = Some (cmd.ExecuteScalar<int64>()); shareId = shr.id } ] }
 
   let get (id: int64) =
     // TODO: Adapt the following code to work with multiple 
@@ -167,7 +158,7 @@ module Shares =
     use rdr = cmd.ExecuteReader()
 
     if rdr.Read()
-    then Some { id            = Some rdr?id
+    then Some { id            = ofObj rdr?id
                 name          = rdr?name
                 currency      = None
                 previousName  = rdr?previous_name
@@ -180,36 +171,47 @@ module Shares =
     else None
 
   // TODO: Tests this
-  let getBySymbol symbol (platform: Platform) =
+  let getBySymbol (symbol: string) (platform: Platform) =
     use db = new Db()
     use cmd = db?Sql <- "SELECT       share.id,
                                       share.name,
                                       share.previous_name,
                                       share_platform.platform_id,
                                       share_platform.symbol
+
                           FROM        share
-                          
+
                           INNER JOIN  share_platform
                           ON          share_platform.share_id = share.id
 
                           WHERE       share_platform.symbol = :symbol
-                          AND         share_platform.platform_id = :platform_id"
-    cmd?symbol <- symbol
+                          AND         share_platform.platform_id = :platform_id
+
+                          LIMIT 1"
+    cmd?symbol      <- symbol
     cmd?platform_id <- int platform
 
     db.Open()
-    use rdr = cmd.ExecuteReader()
+    let share = using (cmd.ExecuteReader()) (fun rdr ->
+                if rdr.Read()
+                then
+                  Some {  id            = Some rdr?id
+                          name          = rdr?name
+                          currency      = None
+                          previousName  = rdr?previous_name
+                          prices        = List.empty<SharePrice>
+                          platforms     = seq { yield { shareId = Some rdr?id
+                                                        platform = enum rdr?platform_id
+                                                        symbol = rdr?symbol } } }
+                else
+                  None)
 
-    if rdr.Read()
-    then Some { id            = Some rdr?id
-                name          = rdr?name
-                currency      = None
-                previousName  = rdr?previous_name
-                prices        = []
-                platforms     = seq { yield { shareId = Some rdr?id
-                                              platform = enum rdr?platform_id
-                                              symbol = rdr?symbol } } }
-    else None
+    match share with
+    | Some ({ id = Some id' } as s) -> 
+      Some { s with prices =  match getSharePriceByShare id' 1 db with
+                              | Some sp -> [ sp ]
+                              | _ -> [] }
+    | None -> None
 
 // This is for the DB
 // Integration.Saxo is for the Excel

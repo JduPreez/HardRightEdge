@@ -30,12 +30,24 @@ type DynamicDbDataReader (reader:NpgsqlDataReader) =
 type DynamicDbCommand (cmd:NpgsqlCommand) = 
   member private me.Command = cmd
       
+  static member (?<-) (cmd:DynamicDbCommand, name:string, value: obj * DbType) = 
+    if cmd.Command.Parameters.Contains(name)
+    then cmd.Command.Parameters.RemoveAt(name)    
+
+    // TODO: Improve this, it feels clumsy
+    let (v, t) = value
+    let param = NpgsqlParameter(name, t)
+    param.Value <- unwrap v |> toDbNull
+    param.DbType <- t
+
+    cmd.Command.Parameters.Add(param) |> ignore
+
   static member (?<-) (cmd:DynamicDbCommand, name:string, value: obj) = 
     // TODO: Take the pattern match that converts value:obj to null for
     // option types, and put into a separate function. Then call this from 
     // the "else ..." part too.
-    if cmd.Command.Parameters.Contains(name) then        
-      cmd.Command.Parameters.RemoveAt(name)
+    if cmd.Command.Parameters.Contains(name) 
+    then cmd.Command.Parameters.RemoveAt(name)
 
     cmd.Command.Parameters.Add(NpgsqlParameter(name, unwrap value |> toDbNull)) |> ignore       
 
@@ -54,7 +66,8 @@ type Db (conn: NpgsqlConnection) =
 
   static member Name = "hard_right_edge"
 
-  member private me.Connection = conn
+  member private me.Connection =
+    conn
 
   static member (?<-) (conn:Db, name, query) =
       let cmd = new NpgsqlCommand(query, conn.Connection)
@@ -66,8 +79,9 @@ type Db (conn: NpgsqlConnection) =
       cmd.CommandType <- CommandType.StoredProcedure
       new DynamicDbCommand(cmd)
 
-  member me.Open() = 
-    conn.Open()
+  member me.Open() = conn.Open()
+
+  member me.IsClosed with get () = conn.State = ConnectionState.Closed
 
   new () = new Db(Db.Name)
 
