@@ -6,7 +6,7 @@ open HardRightEdge.Domain
 
 module Yahoo = 
 
-      let getSharePrices symbol (from: DateTime option) =
+      let getShare symbol (from: DateTime option) =
         let priceHistory = 
           async {
             let frm = if from = None || isNull(box from) // Strangeness where arg "from" becomes null during runtime
@@ -17,23 +17,25 @@ module Yahoo =
                     |> Async.AwaitTask
           } |> Async.RunSynchronously
 
-        { id = None;
-          platforms = [| {  shareId = None;
-                            symbol = symbol.ToUpper();
-                            platform = Platform.Yahoo } |];
-          name = symbol.ToUpper();
-          previousName = None;
-          currency = None;
-          prices = [ for price in priceHistory ->
-                        { id        = None
-                          shareId   = None
-                          date      = price.Date
-                          openp     = price.Open
-                          high      = price.High
-                          low       = price.Low
-                          close     = price.Close 
-                          volume    = price.Volume |> int64
-                          adjClose  = Some price.AdjClose } ] }
+        if priceHistory.Count = 0 
+        then None
+        else Some { id = None;
+                    platforms = [| {  shareId = None;
+                                      symbol = symbol.ToUpper();
+                                      platform = Platform.Yahoo } |];
+                    name = symbol.ToUpper();
+                    previousName = None;
+                    currency = None;
+                    prices = [ for price in priceHistory ->
+                                  { id        = None
+                                    shareId   = None
+                                    date      = price.Date
+                                    openp     = price.Open
+                                    high      = price.High
+                                    low       = price.Low
+                                    close     = price.Close 
+                                    volume    = price.Volume |> int64
+                                    adjClose  = Some price.AdjClose } ] }
 
 let importsRoot = "Imports"
 

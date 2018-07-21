@@ -8,6 +8,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "HardRightEdge.Test", "HardR
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YahooFinanceAPI", "YahooFinanceAPI\YahooFinanceAPI.csproj", "{9F664C6A-6D24-45EF-9A9C-3324292E1C46}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HardRightEdge.WebApi", "HardRightEdge.WebApi\HardRightEdge.WebApi.fsproj", "{FD239842-3D1E-4197-AD40-27C008F0D51C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,18 @@ Global
 		{9F664C6A-6D24-45EF-9A9C-3324292E1C46}.Release|x64.Build.0 = Release|Any CPU
 		{9F664C6A-6D24-45EF-9A9C-3324292E1C46}.Release|x86.ActiveCfg = Release|Any CPU
 		{9F664C6A-6D24-45EF-9A9C-3324292E1C46}.Release|x86.Build.0 = Release|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Debug|x64.Build.0 = Debug|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Debug|x86.Build.0 = Debug|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Release|x64.ActiveCfg = Release|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Release|x64.Build.0 = Release|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Release|x86.ActiveCfg = Release|Any CPU
+		{FD239842-3D1E-4197-AD40-27C008F0D51C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -113,26 +113,55 @@ type Trade = {
 
 module Services =
 
-  // TODO 1: Make this work
-  let getShare symbol platform =
-    // 1. getShareBySymbol, with lastSharePrice
-    // 2. Yahoo.getSharePrices symbol (lastSharePrice+1 day)
+  type getShare             = string * Platform -> string * Platform -> Share option
+  type getShareByPlatform   = string  -> Platform        -> Share option
+  type getShareByDate       = string  -> DateTime option -> Share option  
+  type saveShare            = Share   -> Share
+  type tradesOpen           = unit    -> Trade seq
 
-    // TODO!!!!!!!!!!!!
-    // 1 & 2 is working now
-    // add them here
-    // then complete work for point 3
+  let getSyncShare (getShare: getShareByPlatform) (getShareFromDataFeed: getShareByDate) (saveShare: saveShare) (symblPlatfrm: string * Platform) (feedSymPlatfrm: string * Platform) =
 
-    // 3. Save share prices returned by Yahoo to DB
-    // 4. Now fetch all share prices for the last X years
-    // 5. Return share with shares prices from 4.
-    ()
+    let (symbol, platform) = symblPlatfrm
+    let (feedSymbl, feedPlatfrm) = feedSymPlatfrm
+
+    let shareNotFound = sprintf "Share '%s (%s)' wasn't found on platform '%O (%O)" symbol feedSymbl platform feedPlatfrm
+
+    let share = match getShare symbol platform with // TODO: Change this to not call getShare, & just match on a passed in Share record
+                | Some ({ prices = head :: _ } as s) ->
+                  // We have an existing share, with at least 1 historic share price,
+                  // so just update the prices to latest
+                  match getShareFromDataFeed feedSymbl (Some head.date) with
+                  | Some { prices = prcs } -> { s with prices = s.prices @ prcs }
+                  | _ -> failwith shareNotFound
+
+                | Some ({ prices = [] } as s) ->
+                  // We have an existing share, but without any historic prices
+                  match getShareFromDataFeed feedSymbl None with
+                  | Some { prices = prcs } -> { s with prices = prcs }
+                  | _ -> failwith shareNotFound
+
+                | None -> 
+                  // Completely new share, not stored locally yet, so just use whatever
+                  // the platform gives us
+                  match getShareFromDataFeed feedSymbl None with
+                  | Some s -> s
+                  | _ -> failwith shareNotFound
+
+    // Save share prices returned by data feed platform to DB
+    Some(saveShare share)
   
-  // TODO 2: Make this work
-  let portfolio () =
-    // 1. Get open trades
-    // 2. Group by security
-    // 3. Get shares prices for each security. If online, synch share prices for each security
-    // 4. List grouped securities, with share prices from DB
+  let portfolio (tradesOpen: tradesOpen) (getSyncShare: getShare) (dataFeedPlatfrm: Platform) (platform: Platform) =
+    
+    (tradesOpen())                                    // In this version, we just show some graphs
+    |> Seq.groupBy  (fun t -> t.share.name)           // for each unique share in the list of trades,
+    |> Seq.map      (fun x ->  x |> snd |> Seq.head)  // threrefore just pick 1 trade, because the share
+                                                      // info will be the same for each one in the groupBy.                                                      
+    |> Seq.map      (fun x ->
+                      let pfs = x.share.platforms 
+                                |> Seq.map (fun sp -> sp.symbol, sp.platform)
 
-    ()
+                      getSyncShare  (Seq.find (fun p -> snd p = platform) pfs) 
+                                    (Seq.find (fun p -> snd p = dataFeedPlatfrm) pfs))
+    |> Seq.filter   (fun x -> x.IsSome)
+    |> Seq.map      (fun x -> x.Value)
+    |> Seq.toList

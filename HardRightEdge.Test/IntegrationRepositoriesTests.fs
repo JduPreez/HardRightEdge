@@ -66,7 +66,7 @@ let ``Shares should update share`` () =
 let ``Shares should get share`` () =
   UnitOfWork.temp {
     match Common.insertShare () with
-    | { id = Some sid } ->  match (Shares.get sid) with
+    | { id = Some sid } ->  match Shares.get sid None with
                             | Some _  -> Assert.True(true)
                             | _       -> Assert.True(false)
     | _       -> Assert.True(false)

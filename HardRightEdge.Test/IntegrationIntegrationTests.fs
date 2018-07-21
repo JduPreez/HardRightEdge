@@ -7,9 +7,11 @@ module Yahoo =
 
   [<Fact>]
   let ``Yahoo should getSharePrices for the last year`` () =    
-    let share = Yahoo.getSharePrices "SPLK" None
-    Assert.True(List.length share.prices > 200) // Just use any reasonably large number of days less than 365, but more than 1
-    Assert.True((List.head share.prices).close > 0.0)
+    match Yahoo.getShare "SPLK" None with
+    | Some share -> 
+      Assert.True(List.length share.prices > 200) // Just use any reasonably large number of days less than 365, but more than 1
+      Assert.True((List.head share.prices).close > 0.0)
+    | _ -> Assert.True(false)
 
 module Saxo =
 

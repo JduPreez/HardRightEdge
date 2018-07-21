@@ -52,19 +52,16 @@ module Shares =
     cmd?share_id <- shareId
     
     use rdr = cmd.ExecuteReader()
-    if rdr.Read()
-    then          
-      Some { id       = ofObj rdr?id
-             shareId  = ofObj rdr?share_id
-             date     = rdr?date
-             openp    = rdr?openp
-             high     = rdr?high
-             low      = rdr?low
-             close    = rdr?close
-             adjClose = ofObj rdr?adj_close
-             volume   = rdr?volume }
-    else 
-      None
+    [ while rdr.Read() do      
+        yield { id       = ofObj rdr?id
+                shareId  = ofObj rdr?share_id
+                date     = rdr?date
+                openp    = rdr?openp
+                high     = rdr?high
+                low      = rdr?low
+                close    = rdr?close
+                adjClose = ofObj rdr?adj_close
+                volume   = rdr?volume } ]
 
   let private getSharePriceByShare' (shareId: int64) (days: int) =
     use db = new Db()
@@ -136,12 +133,11 @@ module Shares =
                                     cmd?adj_close <- price.adjClose                                    
                                     yield { price with id = Some (cmd.ExecuteScalar<int64>()); shareId = shr.id } ] }
 
-  let get (id: int64) =
-    // TODO: Adapt the following code to work with multiple 
-    // Platforms, that will cause a Share to be returned 
-    // for each Platform.
+  let get (id: int64) (from: DateTime option) =
+    let days = if from.IsSome then int (DateTime.Now.Subtract(from.Value).TotalDays) else 1
 
     use db = new Db()
+    // TODO: Can't just left join on share_platform, as a share will multiple ones, causing duplicates
     use cmd = db?Sql <- "SELECT     share.id,
                                     name,
                                     previous_name,
@@ -161,16 +157,11 @@ module Shares =
     then Some { id            = ofObj rdr?id
                 name          = rdr?name
                 currency      = None
-                previousName  = rdr?previous_name
-                // TODO: Call ShareRepository.getSharePriceByShare 1L |> Seq.take 1 |> Seq.toList
-                // This will only include the latest share price.
-                // The AppService can then fetch all new prices from this one until today
-                // and save them.
-                prices        = [] // [ (Seq.head (getSharePriceByShare id)) ]
+                previousName  = rdr?previous_name                
+                prices        = getSharePriceByShare id days db
                 platforms     = Seq.empty<SharePlatform> }
     else None
 
-  // TODO: Tests this
   let getBySymbol (symbol: string) (platform: Platform) =
     use db = new Db()
     use cmd = db?Sql <- "SELECT       share.id,
@@ -208,10 +199,8 @@ module Shares =
 
     match share with
     | Some ({ id = Some id' } as s) -> 
-      Some { s with prices =  match getSharePriceByShare id' 1 db with
-                              | Some sp -> [ sp ]
-                              | _ -> [] }
-    | None -> None
+      Some { s with prices =  getSharePriceByShare id' 1 db }
+    | _ -> None
 
 // This is for the DB
 // Integration.Saxo is for the Excel
