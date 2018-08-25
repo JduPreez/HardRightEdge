@@ -1,0 +1,89 @@
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-Light.woff2') format('woff2'),
+         url('font/Lato-Light.woff') format('woff'),
+         url('font/Lato-Light.ttf') format('truetype');
+	font-weight: 300;
+	font-style: normal;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-LightItalic.woff2') format('woff2'),
+         url('font/Lato-LightItalic.woff') format('woff'),
+         url('font/Lato-LightItalic.ttf') format('truetype');
+	font-weight:300;
+	font-style:italic;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-Black.woff2') format('woff2'),
+         url('font/Lato-Black.woff') format('woff'),
+         url('font/Lato-Black.ttf') format('truetype');
+	font-weight:900;
+	font-style:normal;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-BlackItalic.woff2') format('woff2'),
+         url('font/Lato-BlackItalic.woff') format('woff'),
+         url('font/Lato-BlackItalic.ttf') format('truetype');
+	font-weight:900;
+	font-style:italic;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-Bold.woff2') format('woff2'),
+         url('font/Lato-Bold.woff') format('woff'),
+         url('font/Lato-Bold.ttf') format('truetype');
+	font-weight:700;
+	font-style:normal;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-BoldItalic.woff2') format('woff2'),
+         url('font/Lato-BoldItalic.woff') format('woff'),
+         url('font/Lato-BoldItalic.ttf') format('truetype');
+	font-weight:700;
+	font-style:italic;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-Semibold.woff2') format('woff2'),
+         url('font/Lato-Semibold.woff') format('woff'),
+         url('font/Lato-Semibold.ttf') format('truetype');
+	font-weight:500;
+	font-style:normal;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-SemiboldItalic.woff2') format('woff2'),
+         url('font/Lato-SemiboldItalic.woff') format('woff'),
+         url('font/Lato-SemiboldItalic.ttf') format('truetype');
+	font-weight:500;
+	font-style:italic;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-Italic.woff2') format('woff2'),
+         url('font/Lato-Italic.woff') format('woff'),
+         url('font/Lato-Italic.ttf') format('truetype');
+	font-weight:400;
+	font-style:italic;
+}
+
+@font-face {
+	font-family:'LatoWeb';
+	src: url('font/Lato-Regular.woff2') format('woff2'),
+         url('font/Lato-Regular.woff') format('woff'),
+         url('font/Lato-Regular.ttf') format('truetype');
+	font-weight:400;
+	font-style:normal;
+}

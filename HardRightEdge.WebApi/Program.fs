@@ -1,20 +1,21 @@
-﻿namespace HardRightEdge.WebApi
+﻿open Suave
+open Suave.Web
+open Suave.Successful
+open HardRightEdge.WebApi.Restful
+open HardRightEdge.Application
 
-module App =   
-  open Suave.Web
-  open HardRightEdge.WebApi.Restful
-  open HardRightEdge.Application
-  open Suave
 
-  [<EntryPoint>]
-  let main _ = 
-    let shareWebPart = rest "shares" {
-      GetAll      = Some getShares
-      GetById     = None
-      IsExists    = None
-      Create      = None 
-      Update      = None 
-      UpdateById  = None
-      Delete      = None
-    }
-    0 // return an integer exit code
+[<EntryPoint>]
+let main _ = 
+  let portfolioWebPart = rest "portfolio" {
+    GetAll      = Some portfolio
+    GetById     = None
+    IsExists    = None
+    Create      = None
+    Update      = None
+    UpdateById  = None
+    Delete      = None
+  }
+
+  startWebServer defaultConfig portfolioWebPart
+  0 // return an integer exit code*)

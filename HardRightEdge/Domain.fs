@@ -119,9 +119,9 @@ module Services =
   type saveShare            = Share   -> Share
   type tradesOpen           = unit    -> Trade seq
 
-  let getSyncShare (getShare: getShareByPlatform) (getShareFromDataFeed: getShareByDate) (saveShare: saveShare) (symblPlatfrm: string * Platform) (feedSymPlatfrm: string * Platform) =
+  let getSyncShare (getShare: getShareByPlatform) (getShareFromDataFeed: getShareByDate) (saveShare: saveShare) (tradePlatfrm: string * Platform) (feedSymPlatfrm: string * Platform) =
 
-    let (symbol, platform) = symblPlatfrm
+    let (symbol, platform) = tradePlatfrm
     let (feedSymbl, feedPlatfrm) = feedSymPlatfrm
 
     let shareNotFound = sprintf "Share '%s (%s)' wasn't found on platform '%O (%O)" symbol feedSymbl platform feedPlatfrm
@@ -150,18 +150,25 @@ module Services =
     // Save share prices returned by data feed platform to DB
     Some(saveShare share)
   
-  let portfolio (tradesOpen: tradesOpen) (getSyncShare: getShare) (dataFeedPlatfrm: Platform) (platform: Platform) =
-    
-    (tradesOpen())                                    // In this version, we just show some graphs
-    |> Seq.groupBy  (fun t -> t.share.name)           // for each unique share in the list of trades,
-    |> Seq.map      (fun x ->  x |> snd |> Seq.head)  // threrefore just pick 1 trade, because the share
-                                                      // info will be the same for each one in the groupBy.                                                      
-    |> Seq.map      (fun x ->
-                      let pfs = x.share.platforms 
-                                |> Seq.map (fun sp -> sp.symbol, sp.platform)
+  let portfolio (tradesOpen: tradesOpen) (getSyncShare: getShare) (dataFeedPlatfrm: Platform) (tradePlatfrm: Platform) =
+    let p () =
+      (tradesOpen())                                    // In this version, we just show some graphs
+      |> Seq.groupBy  (fun t -> t.share.name)           // for each unique share in the list of trades,
+      |> Seq.map      (fun x ->  x |> snd |> Seq.head)  // threrefore just pick 1 trade, because the share
+                                                        // info will be the same for each one in the groupBy.                                                      
+      |> Seq.map      (fun x ->
+                        let pfs = x.share.platforms 
+                                  |> Seq.map (fun sp -> sp.symbol, sp.platform)
 
-                      getSyncShare  (Seq.find (fun p -> snd p = platform) pfs) 
-                                    (Seq.find (fun p -> snd p = dataFeedPlatfrm) pfs))
-    |> Seq.filter   (fun x -> x.IsSome)
-    |> Seq.map      (fun x -> x.Value)
-    |> Seq.toList
+                        match Seq.tryFind (fun p -> snd p = dataFeedPlatfrm) pfs with
+                        | Some dataPlatfrm ->
+                          // If the share doesn't have a symbol for the data platform,
+                          // then don't synch it to the local database.
+                          getSyncShare  (Seq.find (fun p -> snd p = tradePlatfrm) pfs)
+                                        dataPlatfrm
+                        | _ -> Some x.share) // No data platform, therefore only return the Trade's Share, without synching
+                        
+      |> Seq.filter   (fun x -> x.IsSome)
+      |> Seq.map      (fun x -> x.Value)
+      |> Seq.toList      
+    p

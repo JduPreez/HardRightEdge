@@ -10,4 +10,4 @@ let saveShare = Shares.save
 
 let getShare = Domain.Services.getSyncShare getShareBySymbol getShareByDate saveShare
 
-let portfolio = Domain.Services.portfolio Saxo.tradesOpen getShare Platform.Yahoo
+let portfolio = Domain.Services.portfolio Saxo.tradesOpen getShare Platform.Yahoo Platform.Saxo

@@ -5,7 +5,7 @@
     <FscToolExe>fsc.exe</FscToolExe>
   </PropertyGroup>
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <!--<TargetFramework>netcoreapp2.0</TargetFramework>-->    
     <TargetFramework>net461</TargetFramework>
   </PropertyGroup>
@@ -17,7 +17,6 @@
     <Compile Include="Integration.fs" />
     <Compile Include="Repositories.fs" />
     <Compile Include="Application.fs" />
-    <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Imports\**\*.*">

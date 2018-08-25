@@ -253,3 +253,10 @@ paket-files/
 
 # Trade imports
 Imports/
+
+# Visual Studio Code
+*.vscode
+
+# UI
+**/elm-stuff
+*.DS_Store
