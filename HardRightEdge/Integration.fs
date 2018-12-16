@@ -20,22 +20,22 @@ module Yahoo =
         if priceHistory.Count = 0 
         then None
         else Some { id = None;
-                    platforms = [| {  shareId = None;
+                    platforms = [| {  securityId = None;
                                       symbol = symbol.ToUpper();
                                       platform = Platform.Yahoo } |];
                     name = symbol.ToUpper();
                     previousName = None;
                     currency = None;
                     prices = [ for price in priceHistory ->
-                                  { id        = None
-                                    shareId   = None
-                                    date      = price.Date
-                                    openp     = price.Open
-                                    high      = price.High
-                                    low       = price.Low
-                                    close     = price.Close 
-                                    volume    = price.Volume |> int64
-                                    adjClose  = Some price.AdjClose } ] }
+                                  { id          = None
+                                    securityId  = None
+                                    date        = price.Date
+                                    openp       = price.Open
+                                    high        = price.High
+                                    low         = price.Low
+                                    close       = price.Close 
+                                    volume      = price.Volume |> int64
+                                    adjClose    = Some price.AdjClose } ] }
 
 let importsRoot = "Imports"
 
@@ -82,13 +82,13 @@ module Saxo =
                                           | _         -> TradeType.TransferIn
                             isOpen      = openOrClose.ToLower() = "open"
                             commission  = None
-                            share       = { id            = None
+                            security    = { id            = None
                                             name          = instrument 
                                             previousName  = None
                                             prices        = []
-                                            platforms     = seq [ { shareId   = None; 
-                                                                    platform  = Platform.Saxo; 
-                                                                    symbol    = symbol' } ]
+                                            platforms     = seq [ { securityId  = None; 
+                                                                    platform    = Platform.Saxo; 
+                                                                    symbol      = symbol' } ]
                                             currency      = symbol' |> shareCurrency }
                             transaction   = { id              = None
                                               quantity        = Some(int64 amount)
@@ -98,7 +98,7 @@ module Saxo =
                                               settlementDate  = None
                                               price           = 0.0 //float price'
                                               amount          = 0.0 //float bookedAmount
-                                              type'           = Security(Security.Share)
+                                              type'           = SecurityTransaction(SecurityTransaction.Equity)
                                               currency        = accountId |> accountCurrency } }
     | _ -> None
 
@@ -135,7 +135,7 @@ module Saxo =
                                                     not t.Value.isOpen && 
                                                     t.Value.type' = TradeType.Sold &&
                                                     t.Value.transaction.quantity.IsSome)
-          on ((openTrade.share.name, openTrade.transaction.quantity.Value) = (closedTrade.share.name, (abs closedTrade.transaction.quantity.Value))) 
+          on ((openTrade.security.name, openTrade.transaction.quantity.Value) = (closedTrade.security.name, (abs closedTrade.transaction.quantity.Value))) 
           into result
       for closedTrade in result do
       where (box closedTrade = null)

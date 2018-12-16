@@ -1,48 +1,56 @@
-<!doctype html>
-<html>
-  <head>
-    <title>Hard Right Edge</title>
+<!DOCTYPE html>
+<html lang="en">
 
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="lib/kube701/font.min.css">
-    <link rel="stylesheet" href="lib/kube701/kube.min.css">
-    <link rel="stylesheet" href="lib/kube701/kube-addons.min.css">
-    <link rel="stylesheet" href="lib/kube701/highlight.min.css" />
-    <link rel="stylesheet" href="lib/kube701/hardrightedge.css">
-    <!--<link rel="stylesheet" href="lib/kube701/kube.demo.css?r" />-->
-  </head>
-  <body class="">
-    <div class="page">
-      <header class="header">
-          <div class="header-body">
-              <div class="is-navbar is-inverted">
-                  <div class="is-brand">
-                      <span class="logo">HardRightEdge</span>
-                  </div>
-              </div>
-          </div>
-      </header>
-      <main class="main">
-          <div class="main-body is-container">
-            
-            <div class="main-content">
-              <div class="is-row">
-                <div class="is-col is-10"></div>
-                <div class="is-col is-80" id="app"></div>
-                <div class="is-col is-10"></div>
-              </div>
+<head>
 
-            </div>
-            
-          </div>
-      </main>
+  <!-- Basic Page Needs
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>HardRightEdge</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile Specific Metas
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="http://fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="lib/css/normalize.css">
+  <link rel="stylesheet" href="lib/css/skeleton.css">
+  <link rel="stylesheet" href="lib/css/hardrightedge.css">
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="lib/skeleton.js"></script>
+</head>
+
+<body class="has-docked-nav">
+  <div class="container" id="app">
+    <div class="navbar-spacer"></div>
+    <nav class="navbar">
+      <div class="container">
+        <ul class="navbar-list">
+          <li class="navbar-item"><a class="navbar-link" href="#intro">HardRightEdge</a></li>
+          <li class="navbar-item"><a class="navbar-link" href="#examples">Save</a></li>
+          <li class="navbar-item"><a class="navbar-link" href="#examples">Cancel</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="row main">
+      <div id="app" class="twelve columns">        
+      </div>      
     </div>
+  </div>
+  <script src="app.js"></script>
+  <script>
+      var appContainer = document.getElementById('app');
+      Elm.Main.embed(appContainer);
+  </script>
+</body>
 
-    <script src="app.js"></script>    
-    <script>
-      var appContainer = document.getElementById('app')
-      Elm.Main.embed(appContainer)
-    </script>
-  </body>
 </html>

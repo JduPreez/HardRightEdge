@@ -10,9 +10,9 @@ open HardRightEdge.Domain
 open HardRightEdge.Data
 open HardRightEdge.Infrastructure.Common
 
-module Shares =
+module Securities =
     
-  let private saveSharePlatform (sharePlatform: SharePlatform) =
+  let private saveSharePlatform (sharePlatform: SecurityPlatform) =
     use db = new Db ()
     use cmd = db?Sql <- "INSERT INTO    share_platform
                                         ( share_id,
@@ -26,7 +26,7 @@ module Shares =
                         DO UPDATE          
                         SET share_id = :share_id"
     db.Open()
-    cmd?share_id            <- sharePlatform.shareId
+    cmd?share_id            <- sharePlatform.securityId
     cmd?platform_id         <- int sharePlatform.platform
     cmd?symbol              <- sharePlatform.symbol
     cmd.ExecuteNonQuery ()  |> ignore
@@ -54,7 +54,7 @@ module Shares =
     use rdr = cmd.ExecuteReader()
     [ while rdr.Read() do      
         yield { id       = ofObj rdr?id
-                shareId  = ofObj rdr?share_id
+                securityId  = ofObj rdr?share_id
                 date     = rdr?date
                 openp    = rdr?openp
                 high     = rdr?high
@@ -67,7 +67,7 @@ module Shares =
     use db = new Db()
     getSharePriceByShare shareId days db
 
-  let update (share: Share) =
+  let update (share: Security) =
     use db = new Db ()
     use cmd = db?Sql <- "UPDATE share
                           SET name = :name,
@@ -81,7 +81,7 @@ module Shares =
     cmd.ExecuteNonQuery () |> ignore
     share
     
-  let insert (share: Share) =
+  let insert (share: Security) =
     use db = new Db ()
     use cmd = db?Sql <- "INSERT INTO  share
                                       ( name )
@@ -92,14 +92,14 @@ module Shares =
     cmd?name <- share.name
     { share with id = Some (unbox<int64> (cmd.ExecuteScalar())) }
 
-  let save (share: Share) =
+  let save (share: Security) =
     let shr = match share with
               | { id = Some _ } -> update share
               | _               -> insert share
 
     let savedShare = {  shr with                        
                           platforms = [| for sharePlatform in share.platforms ->
-                                            saveSharePlatform { sharePlatform with shareId = shr.id } |] }
+                                            saveSharePlatform { sharePlatform with securityId = shr.id } |] }
     use db = new Db ()
     use cmd = db?Sql <- "INSERT INTO  share_price 
                                       ( share_id, 
@@ -131,7 +131,7 @@ module Shares =
                                     cmd?close     <- price.close
                                     cmd?volume    <- price.volume
                                     cmd?adj_close <- price.adjClose                                    
-                                    yield { price with id = Some (cmd.ExecuteScalar<int64>()); shareId = shr.id } ] }
+                                    yield { price with id = Some (cmd.ExecuteScalar<int64>()); securityId = shr.id } ] }
 
   let get (id: int64) (from: DateTime option) =
     let days = if from.IsSome then int (DateTime.Now.Subtract(from.Value).TotalDays) else 1
@@ -159,7 +159,7 @@ module Shares =
                 currency      = None
                 previousName  = rdr?previous_name                
                 prices        = getSharePriceByShare id days db
-                platforms     = Seq.empty<SharePlatform> }
+                platforms     = Seq.empty<SecurityPlatform> }
     else None
 
   let getBySymbol (symbol: string) (platform: Platform) =
@@ -190,10 +190,10 @@ module Shares =
                           name          = rdr?name
                           currency      = None
                           previousName  = rdr?previous_name
-                          prices        = List.empty<SharePrice>
-                          platforms     = seq { yield { shareId = Some rdr?id
-                                                        platform = enum rdr?platform_id
-                                                        symbol = rdr?symbol } } }
+                          prices        = List.empty<SecurityPrice>
+                          platforms     = seq { yield { securityId  = Some rdr?id
+                                                        platform    = enum rdr?platform_id
+                                                        symbol      = rdr?symbol } } }
                 else
                   None)
 

@@ -11,9 +11,9 @@ let main _ =
     GetAll      = Some portfolio
     GetById     = None
     IsExists    = None
-    Create      = None
+    Create      = Some saveSecurity
     Update      = None
-    UpdateById  = None
+    UpdateById  = Some saveSecurityById
     Delete      = None
   }
 

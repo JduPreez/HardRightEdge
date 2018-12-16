@@ -8,9 +8,9 @@ let priceStartDate () = DateTime.Now.AddMonths(-4)
 
 let priceEndDate () = DateTime.Now.AddDays(-1.0)
   
-type SharePrice = {
+type SecurityPrice = {
   id:         int64 option
-  shareId:    int64 option
+  securityId: int64 option
   date:       DateTime
   openp:      float
   high:       float
@@ -51,21 +51,21 @@ type Platform =
 | Google  = 2
 | Saxo    = 3
 
-type SharePlatform = {
-  shareId: int64 option
-  platform: Platform
-  symbol: string }
+type SecurityPlatform = {
+  securityId: int64 option
+  platform:   Platform
+  symbol:     string }
 
-type Share = {  
+type Security = {  
   id:           int64 option
   name:         string
   previousName: string option
-  prices:       SharePrice list
-  platforms:    SharePlatform seq
+  prices:       SecurityPrice list
+  platforms:    SecurityPlatform seq
   currency:     CurrencyType option }
 
-type Security =
-| Share = 1
+type SecurityTransaction =
+| Equity = 1
 
 type CorporateAction =
 | DividendCash = 2
@@ -80,7 +80,7 @@ type Tax =
 | WithholdingTax = 7
 
 type TransactionType =
-| Security of Security
+| SecurityTransaction of SecurityTransaction
 | CorporateAction of CorporateAction
 | Expense of Expense
 | Tax of Tax
@@ -107,24 +107,24 @@ type Trade = {
   account:      string
   type':        TradeType
   isOpen:       bool
-  share:        Share
+  security:     Security
   transaction:  Transaction
   commission:   Transaction option }
 
 module Services =
 
-  type getShare             = string * Platform -> string * Platform -> Share option
-  type getShareByPlatform   = string  -> Platform        -> Share option
-  type getShareByDate       = string  -> DateTime option -> Share option  
-  type saveShare            = Share   -> Share
-  type tradesOpen           = unit    -> Trade seq
+  type getSecurity            = string * Platform -> string * Platform -> Security option
+  type getSecurityByPlatform  = string    -> Platform        -> Security option
+  type getSecurityByDate      = string    -> DateTime option -> Security option  
+  type saveSecurity           = Security  -> Security
+  type tradesOpen             = unit      -> Trade seq
 
-  let getSyncShare (getShare: getShareByPlatform) (getShareFromDataFeed: getShareByDate) (saveShare: saveShare) (tradePlatfrm: string * Platform) (feedSymPlatfrm: string * Platform) =
+  let getSyncSecurity (getShare: getSecurityByPlatform) (getShareFromDataFeed: getSecurityByDate) (saveShare: saveSecurity) (tradePlatfrm: string * Platform) (feedSymPlatfrm: string * Platform) =
 
     let (symbol, platform) = tradePlatfrm
     let (feedSymbl, feedPlatfrm) = feedSymPlatfrm
 
-    let shareNotFound = sprintf "Share '%s (%s)' wasn't found on platform '%O (%O)" symbol feedSymbl platform feedPlatfrm
+    let securityNotFound = sprintf "Security '%s (%s)' wasn't found on platform '%O (%O)" symbol feedSymbl platform feedPlatfrm
 
     let share = match getShare symbol platform with // TODO: Change this to not call getShare, & just match on a passed in Share record
                 | Some ({ prices = head :: _ } as s) ->
@@ -132,41 +132,41 @@ module Services =
                   // so just update the prices to latest
                   match getShareFromDataFeed feedSymbl (Some head.date) with
                   | Some { prices = prcs } -> { s with prices = s.prices @ prcs }
-                  | _ -> failwith shareNotFound
+                  | _ -> failwith securityNotFound
 
                 | Some ({ prices = [] } as s) ->
                   // We have an existing share, but without any historic prices
                   match getShareFromDataFeed feedSymbl None with
                   | Some { prices = prcs } -> { s with prices = prcs }
-                  | _ -> failwith shareNotFound
+                  | _ -> failwith securityNotFound
 
                 | None -> 
                   // Completely new share, not stored locally yet, so just use whatever
                   // the platform gives us
                   match getShareFromDataFeed feedSymbl None with
                   | Some s -> s
-                  | _ -> failwith shareNotFound
+                  | _ -> failwith securityNotFound
 
     // Save share prices returned by data feed platform to DB
     Some(saveShare share)
   
-  let portfolio (tradesOpen: tradesOpen) (getSyncShare: getShare) (dataFeedPlatfrm: Platform) (tradePlatfrm: Platform) =
+  let portfolio (tradesOpen: tradesOpen) (getSecurity: getSecurity) (dataFeedPlatfrm: Platform) (tradePlatfrm: Platform) =
     let p () =
       (tradesOpen())                                    // In this version, we just show some graphs
-      |> Seq.groupBy  (fun t -> t.share.name)           // for each unique share in the list of trades,
+      |> Seq.groupBy  (fun t -> t.security.name)        // for each unique share in the list of trades,
       |> Seq.map      (fun x ->  x |> snd |> Seq.head)  // threrefore just pick 1 trade, because the share
                                                         // info will be the same for each one in the groupBy.                                                      
       |> Seq.map      (fun x ->
-                        let pfs = x.share.platforms 
+                        let pfs = x.security.platforms 
                                   |> Seq.map (fun sp -> sp.symbol, sp.platform)
 
                         match Seq.tryFind (fun p -> snd p = dataFeedPlatfrm) pfs with
                         | Some dataPlatfrm ->
                           // If the share doesn't have a symbol for the data platform,
                           // then don't synch it to the local database.
-                          getSyncShare  (Seq.find (fun p -> snd p = tradePlatfrm) pfs)
+                          getSecurity  (Seq.find (fun p -> snd p = tradePlatfrm) pfs)
                                         dataPlatfrm
-                        | _ -> Some x.share) // No data platform, therefore only return the Trade's Share, without synching
+                        | _ -> Some x.security) // No data platform, therefore only return the Trade's Share, without synching
                         
       |> Seq.filter   (fun x -> x.IsSome)
       |> Seq.map      (fun x -> x.Value)
