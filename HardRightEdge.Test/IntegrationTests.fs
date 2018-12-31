@@ -1,4 +1,4 @@
-module HardRightEdge.IntegrationIntegrationTests
+module HardRightEdge.Test.IntegrationTests
 
 open Xunit
 open HardRightEdge.Integration

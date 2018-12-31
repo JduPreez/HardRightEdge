@@ -1,9 +1,8 @@
 ﻿namespace HardRightEdge.WebApi
 
-open Microsoft.FSharpLu.Json
+open HardRightEdge.Infrastructure.Serialization
 open Suave
 open Suave.Operators
-open Suave.Http
 open Suave.Successful
 
 
@@ -21,10 +20,18 @@ module Restful =
 
   let allowCors : WebPart =
     choose [
-        GET >=>
-            fun context ->
-                context |> (
-                    setCORSHeaders )
+      GET >=>
+        fun context ->
+          context |> (setCORSHeaders)
+      POST >=>
+          fun context ->
+          context |> (setCORSHeaders)
+      PUT >=>
+          fun context ->
+          context |> (setCORSHeaders)
+      DELETE >=>
+          fun context ->
+          context |> (setCORSHeaders)
     ]
 
   // 'a -> WebPart
@@ -35,17 +42,20 @@ module Restful =
     jsonSerializerSettings.NullValueHandling <- NullValueHandling.Ignore
 
     JsonConvert.SerializeObject(v, jsonSerializerSettings)*)
-    Compact.serialize(v) 
+    //Compact.serialize(v)
+    toJson v
     |> OK 
     >=> Writers.setMimeType "application/json; charset=utf-8"
 
-  let fromJson json =
-    //JsonConvert.DeserializeObject(json, typeof<'a>) :?> 'a
-    Compact.deserialize(json) |> unbox
+  //let fromJson json =    
+    //Compact.deserialize(json) |> unbox
 
   let getResourceFromReq (req : HttpRequest) = 
-    let getString rawForm = System.Text.Encoding.UTF8.GetString(rawForm)
-    req.rawForm |> getString |> fromJson
+    let getString rawForm = 
+      let x = System.Text.Encoding.UTF8.GetString(rawForm)
+      x
+
+    req.rawForm |> getString |> fromJson<HardRightEdge.Domain.Security>
 
   type RestResource<'a> = {
     GetAll      : (unit -> 'a list) option

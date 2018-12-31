@@ -10,13 +10,16 @@
     <TargetFramework>net461</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\HardRightEdge.WebApi\HardRightEdge.WebApi.fsproj" />
     <ProjectReference Include="..\HardRightEdge\HardRightEdge.fsproj">
       <Name>HardRightEdge.fsproj</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Stubs.fs" />
     <Compile Include="IntegrationRepositoriesTests.fs" />
-    <Compile Include="IntegrationIntegrationTests.fs" />
+    <Compile Include="IntegrationTests.fs" />
+    <Compile Include="IntegrationWebApiTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>    

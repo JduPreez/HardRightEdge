@@ -131,7 +131,7 @@ module Securities =
                                     cmd?close     <- price.close
                                     cmd?volume    <- price.volume
                                     cmd?adj_close <- price.adjClose                                    
-                                    yield { price with id = Some (cmd.ExecuteScalar<int64>()); securityId = shr.id } ] }
+                                    yield { price with id = Some (cmd.ExecuteScalar<int64>()); securityId = shr.id } ] }      
 
   let get (id: int64) (from: DateTime option) =
     let days = if from.IsSome then int (DateTime.Now.Subtract(from.Value).TotalDays) else 1
@@ -144,23 +144,28 @@ module Securities =
                                     platform_id,
                                     symbol
                           FROM      share
+
                           LEFT JOIN share_platform
                           ON        share_platform.share_id = share.id
+                          
                           WHERE     share.id = :id
                           ORDER BY  share.id"
     cmd?id <- id
 
     db.Open()
-    use rdr = cmd.ExecuteReader()
-
-    if rdr.Read()
-    then Some { id            = ofObj rdr?id
-                name          = rdr?name
-                currency      = None
-                previousName  = rdr?previous_name                
-                prices        = getSharePriceByShare id days db
-                platforms     = Seq.empty<SecurityPlatform> }
-    else None
+    match (using (cmd.ExecuteReader()) (fun rdr ->
+      if rdr.Read()
+      then Some { id            = ofObj rdr?id
+                  name          = rdr?name
+                  currency      = None
+                  previousName  = rdr?previous_name                
+                  prices        = []
+                  platforms     = Seq.empty<SecurityPlatform> }
+      else None)) with
+    | Some security -> 
+      // 1st dispose previous reader before creating a new one
+      Some { security with prices = getSharePriceByShare id days db }
+    | _ -> None
 
   let getBySymbol (symbol: string) (platform: Platform) =
     use db = new Db()

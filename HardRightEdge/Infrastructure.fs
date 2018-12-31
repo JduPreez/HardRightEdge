@@ -67,10 +67,13 @@ module UnitOfWork =
     member this.Delay(func) = func
 
     member this.Run(func) =
-      use txScope = new TransactionScope()      
+      let txOptions = new TransactionOptions()
+      txOptions.IsolationLevel = IsolationLevel.ReadUncommitted |> ignore
+
+      use txScope = new TransactionScope(TransactionScopeOption.Required, txOptions)
       let result = func()
 
-      if isDurable 
+      if isDurable
       then txScope.Complete()
 
       result
@@ -81,7 +84,6 @@ module UnitOfWork =
 module FileSystem =
 
   open System.IO
-  open System.Collections.Generic
 
   let (+/) path1 path2 = Path.Combine(path1, path2)
 
@@ -90,3 +92,11 @@ module FileSystem =
   let files path searchPattern =  if isDir path
                                   then Directory.EnumerateFiles(path, searchPattern)
                                   else List.empty<string> :> seq<string>
+
+module Serialization =
+
+  open Microsoft.FSharpLu.Json
+  
+  let toJson = Compact.serialize
+
+  let inline fromJson json = Compact.deserialize json

@@ -11,3 +11,7 @@ From there it provides a bunch of Open R statistics, and various F# FsLab script
 3. F# 4.0 (FSharp.Core, 4.4.0.0)
 4. .NET Framework 4.6.1
 5. Open R (statistics)
+
+## Running tests
+
+Unit tests are written in XUnit. Just grab the Visual Studio XUnit test runner, and you're good to go.
