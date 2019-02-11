@@ -35,35 +35,48 @@ securityDecoder =
 
 encodeSecurityPlatform : SecurityPlatform -> JsonE.Value
 encodeSecurityPlatform securityPlatform =
-  JsonE.encode 0 <|
-    JsonE.object
-      [ ("securityId", (case securityPlatform.securityId of
+  JsonE.object
+    [ ("securityId",  (case securityPlatform.securityId of
                         Nothing -> JsonE.null
-                        Just secId -> JsonE.int secId))]
+                        Just secId -> JsonE.int secId)),
+      ("platform",    (case securityPlatform.platform of
+                        Nothing -> JsonE.null
+                        Just platform -> JsonE.int (platformId platform))),
+      ("symbol",      JsonE.string securityPlatform.symbol) ]
 
 encodeSecurity : Security -> JsonE.Value
-encodeSecurity security =
-  JsonE.encode 0 <|
-    JsonE.object 
-      [ ("id",  (case security.id of
-                  Nothing -> JsonE.null
-                  Just id -> JsonE.int id))
-        ("name", JsonE.string security.name),
-        ("previousName", JsonE.null),
-        ("prices", JsonE.list []),
-        ("platforms", JsonE.list []), -- TODO
-        ("currency", JsonE.null) ]
+encodeSecurity security =  
+  JsonE.object 
+    [ ("id",          (case security.id of
+                        Nothing -> JsonE.null
+                        Just id -> JsonE.int id)),
+      ("name",          JsonE.string security.name),
+      ("previousName",  JsonE.null),
+      ("prices",        JsonE.list []),
+      ("platforms",     JsonE.list <| List.map encodeSecurityPlatform security.platforms),
+      ("currency",      JsonE.null) ]
+
+encodeSecurities : List Security -> String
+encodeSecurities securities =  
+    securities
+    |> List.map encodeSecurity
+    |> JsonE.list
+    |> JsonE.encode 0
 
 getPortfolio : (Result Http.Error (List Security) -> msg) -> Cmd msg
 getPortfolio msg =
   Http.get (baseUrl ++ "/portfolio") securitiesDecoder
   |> Http.send msg
 
-updateSecurity : Security -> (Result Http.Error Security -> msg) -> Cmd msg
-updateSecurity security msg =
+saveSecurities : List Security -> (Result Http.Error Security -> msg) -> Cmd msg
+saveSecurities securities msg =
   Http.request
     { method  = "PUT",
       headers = [],
-      url     = baseUrl ++ "/portfolio/" ++ toString security.id,
-      body    = Http.stringBody "application/json" <| 
+      url     = baseUrl ++ "/portfolio",
+      body    = Http.stringBody "application/json" <| encodeSecurities securities,
+      expect  = Http.expectJson securityDecoder,
+      timeout = Nothing,
+      withCredentials = False 
     }
+  |> Http.send msg

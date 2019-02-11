@@ -63,7 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
-      <HintPath>..\packages\FSharp.Core.4.3.4\lib\net45\FSharp.Core.dll</HintPath>
+      <HintPath>..\packages\FSharp.Core.4.5.2\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.FSharpLu.Json">
       <HintPath>..\packages\Microsoft.FSharpLu.Json.0.10.27\lib\net461\Microsoft.FSharpLu.Json.dll</HintPath>
@@ -85,7 +85,7 @@
   <ItemGroup>
     <ProjectReference Include="..\HardRightEdge\HardRightEdge.fsproj">
       <Name>HardRightEdge</Name>
-      <Project>{03fffc0e-571d-48db-bb0a-9642a978633c}</Project>
+      <Project>{72add6ce-46fe-4608-8517-60f3fdeeaef9}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\YahooFinanceAPI\YahooFinanceAPI.csproj">

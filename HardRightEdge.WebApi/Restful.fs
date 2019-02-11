@@ -35,7 +35,7 @@ module Restful =
     ]
 
   // 'a -> WebPart
-  let JSON v =     
+  let inline JSON< ^T> (v: ^T) =     
     (*let jsonSerializerSettings = new JsonSerializerSettings()
     jsonSerializerSettings.Converters.Add(new IdiomaticDuConverter())
     jsonSerializerSettings.ContractResolver <- new CamelCasePropertyNamesContractResolver()
@@ -50,40 +50,76 @@ module Restful =
   //let fromJson json =    
     //Compact.deserialize(json) |> unbox
 
-  let getResourceFromReq (req : HttpRequest) = 
-    let getString rawForm = 
-      let x = System.Text.Encoding.UTF8.GetString(rawForm)
-      x
+  let inline getResourceFromReq (req : HttpRequest) : 't = 
+    let getString rawForm = System.Text.Encoding.UTF8.GetString(rawForm)
+    let obj : 't = req.rawForm |> getString |> fromJson
+    obj
 
-    req.rawForm |> getString |> fromJson<HardRightEdge.Domain.Security>
-
-  type RestResource<'a> = {
-    GetAll      : (unit -> 'a list) option
-    GetById     : (int64 -> 'a option) option
+  type RestResource< ^T> = {
+    GetAll      : (unit -> ^T list) option
+    GetById     : (int64 -> ^T option) option
     IsExists    : (int64 -> bool) option
-    Create      : ('a -> 'a) option
-    Update      : ('a -> 'a) option
-    UpdateById  : (int64 -> 'a -> 'a) option
+    Create      : (^T -> ^T) option
+    Update      : (^T -> ^T) option
+    UpdateById  : (int64 -> ^T -> ^T) option
     Delete      : (int64 -> unit) option
   }
 
-  let rest resourceName (resource: RestResource<'a>) =
-     
+  type RestRes<'a> =
+    | GetAll of (unit -> 'a list)
+    | Create of ('a -> 'a)
+    | GetById of (int64 -> 'a option)
+    | IsExists of (int64 -> bool)
+    | Update of ('a -> 'a)
+    | UpdateById of (int64 -> 'a -> 'a)
+    | Delete of (int64 -> unit)
+
+  let inline rest resourceName (resources: RestRes<'a> list) =
     let resourcePath = "/" + resourceName
     let resourceIdPath = new PrintfFormat<(int64 -> string),unit,string,string,int64>(resourcePath + "/%d")
       
-    let badRequest = BAD_REQUEST "Resource not found"
+    //let badRequest = BAD_REQUEST "Resource not found"
 
     let handleResource requestError = function
         | Some r -> r |> JSON
         | _ -> requestError
+     
+    let toWebParts (webParts: ((HttpContext -> Async<HttpContext option>) list) * ((HttpContext -> Async<HttpContext option>) list)) method =
+      ((match method with
+        | GetAll(getAll) ->           
+          (GET >=> warbler (fun _ -> getAll () |> JSON)) :: fst webParts
+        | Create create ->           
+          (POST >=> request (getResourceFromReq >> create >> JSON)) :: fst webParts
+        | Update(update) -> 
+          (PUT >=> request (getResourceFromReq >> update >> JSON)) :: fst webParts
+        | _ -> fst webParts), 
+        match method with
+        | GetById(getById) ->        
+          (GET >=> pathScan resourceIdPath (getById >> handleResource (NOT_FOUND "Resource not found"))) :: snd webParts
+        | UpdateById(updateById) -> 
+          (PUT >=> pathScan resourceIdPath (fun id -> request (getResourceFromReq >> (updateById id) >> JSON))) :: snd webParts
+        | Delete(deleteById) ->
+          let deleteResourceById id =
+                      deleteById id
+                      NO_CONTENT
+          (DELETE >=> pathScan resourceIdPath deleteResourceById) :: snd webParts
+        | IsExists(isExists) ->
+          (HEAD >=> pathScan resourceIdPath (fun id -> if isExists id then OK "" else NOT_FOUND "")) :: snd webParts
+        | _ -> snd webParts)
+    
+    let (batchWebParts, singleWebParts) = List.fold toWebParts ([], []) resources
+    allowCors >=> choose ((path resourcePath >=> choose batchWebParts) :: singleWebParts)
 
-    let get = match resource.GetAll with
-              | Some getAll ->  [GET >=> warbler (fun _ -> getAll () |> JSON)]
+    (*let isGet r = match r with | GetAll(_) -> true | _ -> false
+    let get = match List.tryFind isGet resources with
+              | Some (GetAll(getAll)) ->  [GET >=> warbler (fun _ -> getAll () |> JSON)]
               | _ -> []
-
-    let post =  match resource.Create with
-                | Some create -> [POST >=> request (getResourceFromReq >> create >> JSON)]
+    
+    let isPost r = match r with | Create(_) -> true | _ -> false
+    let post =  match List.tryFind isPost resources with
+                | Some create -> 
+                  let x = unbox create
+                  [POST >=> request (getResourceFromReq >> x >> JSON)]
                 | _ -> []
 
     let put = match resource.Update with
@@ -121,12 +157,9 @@ module Restful =
                     if isExists id then OK "" else NOT_FOUND ""
 
                   [HEAD >=> pathScan resourceIdPath isResourceExists]
-                | _ -> []
+                | _ -> []*)
 
     //path resourcePath >=> GET >=> get.Head
-
-    let z = get @ post @ put
-    allowCors >=> choose ((path resourcePath >=> choose z) :: (delete1 @ get1 @ put1 @ head))
 
         //[
         //[

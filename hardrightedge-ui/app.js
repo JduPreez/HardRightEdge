@@ -11234,6 +11234,17 @@ var _user$project$Domain$updateIn = F4(
 			updatedSec,
 			securities);
 	});
+var _user$project$Domain$platformId = function (platform) {
+	var _p0 = platform;
+	switch (_p0.ctor) {
+		case 'Yahoo':
+			return 1;
+		case 'Google':
+			return 2;
+		default:
+			return 3;
+	}
+};
 var _user$project$Domain$SecurityPlatform = F3(
 	function (a, b, c) {
 		return {securityId: a, platform: b, symbol: c};
@@ -11254,9 +11265,9 @@ var _user$project$Domain$symbol = F2(
 				A2(
 					_elm_community$list_extra$List_Extra$find,
 					function (sp) {
-						var _p0 = sp.platform;
-						if (_p0.ctor === 'Just') {
-							return _elm_lang$core$Native_Utils.eq(_p0._0, _user$project$Domain$Saxo);
+						var _p1 = sp.platform;
+						if (_p1.ctor === 'Just') {
+							return _elm_lang$core$Native_Utils.eq(_p1._0, _user$project$Domain$Saxo);
 						} else {
 							return false;
 						}
@@ -11266,8 +11277,8 @@ var _user$project$Domain$symbol = F2(
 var _user$project$Domain$Google = {ctor: 'Google'};
 var _user$project$Domain$Yahoo = {ctor: 'Yahoo'};
 var _user$project$Domain$platform = function (id) {
-	var _p1 = id;
-	switch (_p1) {
+	var _p2 = id;
+	switch (_p2) {
 		case 1:
 			return _elm_lang$core$Maybe$Just(_user$project$Domain$Yahoo);
 		case 2:
@@ -11284,6 +11295,109 @@ var _user$project$Domain$SecurityRoute = function (a) {
 };
 var _user$project$Domain$SecuritiesRoute = {ctor: 'SecuritiesRoute'};
 
+var _user$project$Api$encodeSecurityPlatform = function (securityPlatform) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'securityId',
+				_1: function () {
+					var _p0 = securityPlatform.securityId;
+					if (_p0.ctor === 'Nothing') {
+						return _elm_lang$core$Json_Encode$null;
+					} else {
+						return _elm_lang$core$Json_Encode$int(_p0._0);
+					}
+				}()
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'platform',
+					_1: function () {
+						var _p1 = securityPlatform.platform;
+						if (_p1.ctor === 'Nothing') {
+							return _elm_lang$core$Json_Encode$null;
+						} else {
+							return _elm_lang$core$Json_Encode$int(
+								_user$project$Domain$platformId(_p1._0));
+						}
+					}()
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'symbol',
+						_1: _elm_lang$core$Json_Encode$string(securityPlatform.symbol)
+					},
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _user$project$Api$encodeSecurity = function (security) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'id',
+				_1: function () {
+					var _p2 = security.id;
+					if (_p2.ctor === 'Nothing') {
+						return _elm_lang$core$Json_Encode$null;
+					} else {
+						return _elm_lang$core$Json_Encode$int(_p2._0);
+					}
+				}()
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'name',
+					_1: _elm_lang$core$Json_Encode$string(security.name)
+				},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'previousName', _1: _elm_lang$core$Json_Encode$null},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'prices',
+							_1: _elm_lang$core$Json_Encode$list(
+								{ctor: '[]'})
+						},
+						_1: {
+							ctor: '::',
+							_0: {
+								ctor: '_Tuple2',
+								_0: 'platforms',
+								_1: _elm_lang$core$Json_Encode$list(
+									A2(_elm_lang$core$List$map, _user$project$Api$encodeSecurityPlatform, security.platforms))
+							},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'currency', _1: _elm_lang$core$Json_Encode$null},
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		});
+};
+var _user$project$Api$encodeSecurities = function (securities) {
+	return A2(
+		_elm_lang$core$Json_Encode$encode,
+		0,
+		_elm_lang$core$Json_Encode$list(
+			A2(_elm_lang$core$List$map, _user$project$Api$encodeSecurity, securities)));
+};
 var _user$project$Api$platformDecoder = A2(
 	_elm_lang$core$Json_Decode$andThen,
 	function (id) {
@@ -11317,6 +11431,25 @@ var _user$project$Api$getPortfolio = function (msg) {
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Api$baseUrl, '/portfolio'),
 			_user$project$Api$securitiesDecoder));
 };
+var _user$project$Api$updateSecurities = F2(
+	function (securities, msg) {
+		return A2(
+			_elm_lang$http$Http$send,
+			msg,
+			_elm_lang$http$Http$request(
+				{
+					method: 'PUT',
+					headers: {ctor: '[]'},
+					url: A2(_elm_lang$core$Basics_ops['++'], _user$project$Api$baseUrl, '/portfolio'),
+					body: A2(
+						_elm_lang$http$Http$stringBody,
+						'application/json',
+						_user$project$Api$encodeSecurities(securities)),
+					expect: _elm_lang$http$Http$expectJson(_user$project$Api$securityDecoder),
+					timeout: _elm_lang$core$Maybe$Nothing,
+					withCredentials: false
+				}));
+	});
 
 var _user$project$Routing$matchers = _evancz$url_parser$UrlParser$oneOf(
 	{
@@ -11400,9 +11533,32 @@ var _user$project$Main$viewItem = function (security) {
 					{ctor: '[]'},
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html$text(
-							A2(_user$project$Domain$symbol, _user$project$Domain$Saxo, security.platforms)),
-						_1: {
+						_0: A2(
+							_elm_lang$html$Html$input,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$type_('text'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$value(
+										A2(_user$project$Domain$symbol, _user$project$Domain$Saxo, security.platforms)),
+									_1: {
+										ctor: '::',
+										_0: _user$project$Main$onBlurWithTargetValue(
+											A2(_user$project$Main$EditSymbol, security, _user$project$Domain$Saxo)),
+										_1: {ctor: '[]'}
+									}
+								}
+							},
+							{ctor: '[]'}),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$td,
+						{ctor: '[]'},
+						{
 							ctor: '::',
 							_0: A2(
 								_elm_lang$html$Html$input,
@@ -11412,50 +11568,17 @@ var _user$project$Main$viewItem = function (security) {
 									_1: {
 										ctor: '::',
 										_0: _elm_lang$html$Html_Attributes$value(
-											A2(_user$project$Domain$symbol, _user$project$Domain$Saxo, security.platforms)),
+											A2(_user$project$Domain$symbol, _user$project$Domain$Yahoo, security.platforms)),
 										_1: {
 											ctor: '::',
 											_0: _user$project$Main$onBlurWithTargetValue(
-												A2(_user$project$Main$EditSymbol, security, _user$project$Domain$Saxo)),
+												A2(_user$project$Main$EditSymbol, security, _user$project$Domain$Yahoo)),
 											_1: {ctor: '[]'}
 										}
 									}
 								},
 								{ctor: '[]'}),
 							_1: {ctor: '[]'}
-						}
-					}),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$td,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text(
-								A2(_user$project$Domain$symbol, _user$project$Domain$Yahoo, security.platforms)),
-							_1: {
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$input,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$type_('text'),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$value(
-												A2(_user$project$Domain$symbol, _user$project$Domain$Yahoo, security.platforms)),
-											_1: {
-												ctor: '::',
-												_0: _user$project$Main$onBlurWithTargetValue(
-													A2(_user$project$Main$EditSymbol, security, _user$project$Domain$Yahoo)),
-												_1: {ctor: '[]'}
-											}
-										}
-									},
-									{ctor: '[]'}),
-								_1: {ctor: '[]'}
-							}
 						}),
 					_1: {ctor: '[]'}
 				}

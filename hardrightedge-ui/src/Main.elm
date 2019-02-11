@@ -43,6 +43,7 @@ type Msg
   | ShowSecurities  (Result Http.Error (List Security))
   | EditSecurity    Security
   | EditSymbol      Security Platform String
+  
 
 getPortfolioCmd : Cmd Msg
 getPortfolioCmd = Api.getPortfolio ShowSecurities
@@ -75,6 +76,11 @@ update msg model =
                                           security 
                                           platform 
                                           symbol }, Cmd.none)
+  
+    -- TODO:
+    -- 1. Add a SaveSecurities  action here
+    -- 2. Hook this up to Api.saveSecurities
+    -- 3. On back-end change API to support a list of securities
 
 onBlurWithTargetValue : (String -> msg) -> Attribute msg
 onBlurWithTargetValue value =
@@ -100,11 +106,11 @@ viewItem: Security -> Html Msg
 viewItem security =
   tr [ onClick <| EditSecurity security ]
         [ td [] [ text security.name ],
-          td [] [ text (security.platforms |> symbol Saxo), 
+          td [] [ --text (security.platforms |> symbol Saxo), 
                   input [ type_ "text", 
                           value (security.platforms |> symbol Saxo),
                           onBlurWithTargetValue <| EditSymbol security Saxo ] [] ],
-          td [] [ text (security.platforms |> symbol Yahoo), 
+          td [] [ --text (security.platforms |> symbol Yahoo), 
                   input [ type_ "text", 
                           value (security.platforms |> symbol Yahoo),
                           onBlurWithTargetValue <| EditSymbol security Yahoo ] [] ]]

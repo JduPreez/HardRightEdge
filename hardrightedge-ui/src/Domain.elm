@@ -15,6 +15,13 @@ platform id =
   3 -> Just Saxo
   _ -> Nothing
 
+platformId: Platform -> Int
+platformId platform =
+  case platform of
+  Yahoo -> 1
+  Google -> 2
+  Saxo -> 3
+
 type alias SecurityPlatform = {
   securityId: Maybe Int,
   platform:   Maybe Platform,

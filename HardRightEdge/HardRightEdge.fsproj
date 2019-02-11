@@ -1,38 +1,31 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\fsc.props" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <FscToolPath>C:\Program Files (x86)\Microsoft SDKs\F#\10.1\Framework\v4.0</FscToolPath>               
-    <FscToolExe>fsc.exe</FscToolExe>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <!--<TargetFramework>netcoreapp2.0</TargetFramework>-->    
-    <TargetFramework>net461</TargetFramework>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Compile Include="Excel.fs" />
-    <Compile Include="Infrastructure.fs" />    
-    <Compile Include="Data.fs" />
+    <Compile Include="Infrastructure.fs" />
     <Compile Include="Domain.fs" />
+    <Compile Include="Data.fs" />
+    <Compile Include="Excel.fs" />
     <Compile Include="Integration.fs" />
     <Compile Include="Repositories.fs" />
     <Compile Include="Application.fs" />
   </ItemGroup>
+
   <ItemGroup>
-    <Content Include="Imports\**\*.*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <None Include="Imports\Saxo\Trades_8077573_01-Jan-2017_31-Dec-2017.xlsx" />
   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="EPPlus" Version="4.5.1" />
     <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.10.27" />
     <PackageReference Include="Npgsql" Version="3.2.6" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\YahooFinanceAPI\YahooFinanceAPI.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Transactions" />
-  </ItemGroup>
+
 </Project>
