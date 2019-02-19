@@ -25,19 +25,19 @@ let ``Web API should get portfolio`` () =
 let ``Serialization should deserialize Security.name`` () =
   // When we have more serialization tests, we can move them
   // to their own module
-  let sec = Stubs.testShare
+  let sec = Stubs.testShare None None None
   let secSer = Stubs.testShare |> toJson
   let secDeser : Domain.Security = fromJson secSer  
   Assert.Equal(sec.name, secDeser.name)
 
 [<Fact>]
-let ``Web API should create new security`` () =
-  let sec = Stubs.testShare
-  let secJson = sec |> toJson
+let ``Web API should create new securities`` () =
+  let secList = Stubs.testShares ()
+  let secListJson = secList |> toJson
   let response = Http.Request
                   ( host + "/portfolio",
                     httpMethod = "POST",
                     headers = [ Accept HttpContentTypes.Json ],
-                    body = TextRequest secJson )
+                    body = TextRequest secListJson )
   
   Assert.True(response.StatusCode = 200)

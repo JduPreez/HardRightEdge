@@ -5,7 +5,7 @@ open HardRightEdge.Domain
 open HardRightEdge.Infrastructure
 open Xunit
 
-let insertShare () = Securities.insert Stubs.testShare
+let insertShare () = Securities.insert (Stubs.testShare None None None)
 
 [<Fact>]
 let ``Securities should insertShare`` () =
@@ -38,7 +38,7 @@ let ``Securities should get share`` () =
 [<Fact>]
 let ``Securities should saveShare without prices`` () =
   UnitOfWork.temp {
-    match Securities.save Stubs.testShare with
+    match Securities.save (Stubs.testShare None None None) with
     | { id = Some _ } -> Assert.True(true)
     | _               -> Assert.True(false)
   }
@@ -46,7 +46,7 @@ let ``Securities should saveShare without prices`` () =
 [<Fact>]
 let ``Securities should saveShare with prices`` () =
   UnitOfWork.temp {
-    match Securities.save { Stubs.testShare 
+    match Securities.save { Stubs.testShare None None None
                             with prices = (Stubs.testSharePrices None) } with
     | { id = Some _ } -> Assert.True(true)
     | _               -> Assert.True(false)
@@ -55,7 +55,7 @@ let ``Securities should saveShare with prices`` () =
 [<Fact>]
 let ``Securities should getBySymbol`` () = 
   UnitOfWork.temp {
-    match Securities.save Stubs.testShare with
+    match Securities.save (Stubs.testShare None None None) with
     | { id = Some _; platforms = platfs } ->
       let yahoo = Seq.find (fun p -> p.platform = Platform.Yahoo)  platfs
       let share = Securities.getBySymbol yahoo.symbol Platform.Yahoo
@@ -66,7 +66,7 @@ let ``Securities should getBySymbol`` () =
 [<Fact>]
 let ``Securities should getBySymbol with prices`` () =
   UnitOfWork.temp {
-    match Securities.save Stubs.testShare with
+    match Securities.save (Stubs.testShare None None None) with
     | { id = Some _; platforms = platfs; prices = { id = Some _ } :: _ } ->
       let yahoo = Seq.find (fun p -> p.platform = Platform.Yahoo)  platfs
       match Securities.getBySymbol yahoo.symbol Platform.Yahoo with

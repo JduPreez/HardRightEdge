@@ -66,6 +66,8 @@ module UnitOfWork =
 
     member this.Delay(func) = func
 
+    member this.For(m, func) = this.Bind(m, func)
+
     member this.Run(func) =
       let txOptions = new TransactionOptions()
       txOptions.IsolationLevel = IsolationLevel.ReadUncommitted |> ignore

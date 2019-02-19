@@ -16,7 +16,9 @@ let getSecurity = Domain.Services.getSyncSecurity getShareBySymbol getShareByDat
 
 let portfolio = Domain.Services.portfolio Saxo.tradesOpen getSecurity Platform.Yahoo Platform.Saxo
 
-(*let savePortfolio =
-  UnitOfWork.temp {
-     
-  }*)
+// TODO: Test this
+let savePortfolio (securities: Security list) =
+  UnitOfWork.durable {
+    return [ for sec in securities ->
+              saveSecurity sec ]
+  }

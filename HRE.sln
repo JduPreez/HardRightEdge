@@ -6,9 +6,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YahooFinanceAPI", "YahooFin
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HardRightEdge.WebApi", "HardRightEdge.WebApi\HardRightEdge.WebApi.fsproj", "{FD239842-3D1E-4197-AD40-27C008F0D51C}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HardRightEdge", "HardRightEdge\HardRightEdge.fsproj", "{72ADD6CE-46FE-4608-8517-60F3FDEEAEF9}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "HardRightEdge", "HardRightEdge\HardRightEdge.fsproj", "{72ADD6CE-46FE-4608-8517-60F3FDEEAEF9}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "HardRightEdge.Test", "HardRightEdge.Test\HardRightEdge.Test.fsproj", "{DCF6E947-396C-4AB0-A757-95C8D155F74F}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "HardRightEdge.Test", "HardRightEdge.Test\HardRightEdge.Test.fsproj", "{DCF6E947-396C-4AB0-A757-95C8D155F74F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

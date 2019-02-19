@@ -59,18 +59,18 @@ module Restful =
     GetAll      : (unit -> ^T list) option
     GetById     : (int64 -> ^T option) option
     IsExists    : (int64 -> bool) option
-    Create      : (^T -> ^T) option
-    Update      : (^T -> ^T) option
+    Create      : (^T list -> ^T list option) option
+    Update      : (^T list -> ^T list option) option
     UpdateById  : (int64 -> ^T -> ^T) option
     Delete      : (int64 -> unit) option
   }
 
   type RestRes<'a> =
     | GetAll of (unit -> 'a list)
-    | Create of ('a -> 'a)
+    | Create of ('a list -> 'a list option)
     | GetById of (int64 -> 'a option)
     | IsExists of (int64 -> bool)
-    | Update of ('a -> 'a)
+    | Update of ('a list -> 'a list option)
     | UpdateById of (int64 -> 'a -> 'a)
     | Delete of (int64 -> unit)
 
