@@ -40,11 +40,11 @@ module Currency =
 
 let currency symbol =
   match symbol with
-  | "USD" as x -> Currency.USD
-  | "EUR" as x -> Currency.EUR
-  | "GBP" as x -> Currency.GBP
-  | "SGD" as x -> Currency.SGD
-  | "DKK" as x -> Currency.DKK
+  | "EUR" -> Currency.EUR
+  | "GBP" -> Currency.GBP
+  | "SGD" -> Currency.SGD
+  | "DKK" -> Currency.DKK
+  | _ -> Currency.USD
  
 type Platform =
 | Yahoo   = 1
@@ -150,7 +150,7 @@ module Services =
     // Save share prices returned by data feed platform to DB
     Some(saveShare share)
   
-  let portfolio (tradesOpen: tradesOpen) (getSecurity: getSecurity) (dataFeedPlatfrm: Platform) (tradePlatfrm: Platform) =
+  let portfolio (tradesOpen: tradesOpen) (getSecurity: getSecurity) (dataFeedPlatfrm: Platform) (tradePlatfrm: Platform) =    
     let p () =
       (tradesOpen())                                    // In this version, we just show some graphs
       |> Seq.groupBy  (fun t -> t.security.name)        // for each unique share in the list of trades,

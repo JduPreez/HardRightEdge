@@ -23,6 +23,9 @@ module Restful =
       GET >=>
         fun context ->
           context |> (setCORSHeaders)
+      OPTIONS >=>
+          fun context ->
+          context |> (setCORSHeaders)
       POST >=>
           fun context ->
           context |> (setCORSHeaders)
@@ -107,7 +110,8 @@ module Restful =
           (HEAD >=> pathScan resourceIdPath (fun id -> if isExists id then OK "" else NOT_FOUND "")) :: snd webParts
         | _ -> snd webParts)
     
-    let (batchWebParts, singleWebParts) = List.fold toWebParts ([], []) resources
+    let (batchWebParts, singleWebParts) = List.fold toWebParts ([], [(OPTIONS >=> warbler (fun _ -> OK ""))]) resources
+
     allowCors >=> choose ((path resourcePath >=> choose batchWebParts) :: singleWebParts)
 
     (*let isGet r = match r with | GetAll(_) -> true | _ -> false

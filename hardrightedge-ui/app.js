@@ -11431,21 +11431,29 @@ var _user$project$Api$getPortfolio = function (msg) {
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Api$baseUrl, '/portfolio'),
 			_user$project$Api$securitiesDecoder));
 };
-var _user$project$Api$updateSecurities = F2(
+var _user$project$Api$saveSecurities = F2(
 	function (securities, msg) {
+		var x = _user$project$Api$encodeSecurities(
+			A2(_elm_lang$core$List$take, 1, securities));
+		var _p3 = A2(_elm_lang$core$Debug$log, 'JSON', x);
 		return A2(
 			_elm_lang$http$Http$send,
 			msg,
 			_elm_lang$http$Http$request(
 				{
 					method: 'PUT',
-					headers: {ctor: '[]'},
+					headers: {
+						ctor: '::',
+						_0: A2(_elm_lang$http$Http$header, 'Accept', 'application/json'),
+						_1: {ctor: '[]'}
+					},
 					url: A2(_elm_lang$core$Basics_ops['++'], _user$project$Api$baseUrl, '/portfolio'),
 					body: A2(
 						_elm_lang$http$Http$stringBody,
 						'application/json',
-						_user$project$Api$encodeSecurities(securities)),
-					expect: _elm_lang$http$Http$expectJson(_user$project$Api$securityDecoder),
+						_user$project$Api$encodeSecurities(
+							A2(_elm_lang$core$List$take, 1, securities))),
+					expect: _elm_lang$http$Http$expectJson(_user$project$Api$securitiesDecoder),
 					timeout: _elm_lang$core$Maybe$Nothing,
 					withCredentials: false
 				}));
@@ -11500,6 +11508,12 @@ var _user$project$Main$Model = F3(
 	function (a, b, c) {
 		return {securities: a, security: b, errors: c};
 	});
+var _user$project$Main$HandleSaved = function (a) {
+	return {ctor: 'HandleSaved', _0: a};
+};
+var _user$project$Main$SaveSecurities = function (a) {
+	return {ctor: 'SaveSecurities', _0: a};
+};
 var _user$project$Main$EditSymbol = F3(
 	function (a, b, c) {
 		return {ctor: 'EditSymbol', _0: a, _1: b, _2: c};
@@ -11585,7 +11599,7 @@ var _user$project$Main$viewItem = function (security) {
 			}
 		});
 };
-var _user$project$Main$view = function (model) {
+var _user$project$Main$viewContent = function (model) {
 	return A2(
 		_elm_lang$html$Html$table,
 		{
@@ -11671,6 +11685,181 @@ var _user$project$Main$view = function (model) {
 			}
 		});
 };
+var _user$project$Main$view = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('container'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$div,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$class('navbar-spacer'),
+					_1: {ctor: '[]'}
+				},
+				{ctor: '[]'}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$nav,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('navbar'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$div,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('container'),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$ul,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$class('navbar-list'),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$li,
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html_Attributes$class('navbar-item'),
+												_1: {ctor: '[]'}
+											},
+											{
+												ctor: '::',
+												_0: A2(
+													_elm_lang$html$Html$a,
+													{
+														ctor: '::',
+														_0: _elm_lang$html$Html_Attributes$class('navbar-link'),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$html$Html_Attributes$href('#home'),
+															_1: {ctor: '[]'}
+														}
+													},
+													{
+														ctor: '::',
+														_0: _elm_lang$html$Html$text('HardRightEdge'),
+														_1: {ctor: '[]'}
+													}),
+												_1: {ctor: '[]'}
+											}),
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$li,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Attributes$class('navbar-item'),
+													_1: {ctor: '[]'}
+												},
+												{
+													ctor: '::',
+													_0: A2(
+														_elm_lang$html$Html$a,
+														{
+															ctor: '::',
+															_0: _elm_lang$html$Html_Attributes$class('navbar-link'),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$html$Html_Attributes$href('#save'),
+																_1: {
+																	ctor: '::',
+																	_0: _elm_lang$html$Html_Events$onClick(
+																		_user$project$Main$SaveSecurities(model.securities)),
+																	_1: {ctor: '[]'}
+																}
+															}
+														},
+														{
+															ctor: '::',
+															_0: _elm_lang$html$Html$text('Save'),
+															_1: {ctor: '[]'}
+														}),
+													_1: {ctor: '[]'}
+												}),
+											_1: {
+												ctor: '::',
+												_0: A2(
+													_elm_lang$html$Html$li,
+													{
+														ctor: '::',
+														_0: _elm_lang$html$Html_Attributes$class('navbar-item'),
+														_1: {ctor: '[]'}
+													},
+													{
+														ctor: '::',
+														_0: A2(
+															_elm_lang$html$Html$a,
+															{
+																ctor: '::',
+																_0: _elm_lang$html$Html_Attributes$class('navbar-link'),
+																_1: {
+																	ctor: '::',
+																	_0: _elm_lang$html$Html_Attributes$href('#cancel'),
+																	_1: {ctor: '[]'}
+																}
+															},
+															{
+																ctor: '::',
+																_0: _elm_lang$html$Html$text('Cancel'),
+																_1: {ctor: '[]'}
+															}),
+														_1: {ctor: '[]'}
+													}),
+												_1: {ctor: '[]'}
+											}
+										}
+									}),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$div,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$class('row main'),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$div,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('twelve columns'),
+									_1: {ctor: '[]'}
+								},
+								{
+									ctor: '::',
+									_0: _user$project$Main$viewContent(model),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
 var _user$project$Main$ShowSecurities = function (a) {
 	return {ctor: 'ShowSecurities', _0: a};
 };
@@ -11706,7 +11895,7 @@ var _user$project$Main$update = F2(
 			case 'EditSecurity':
 				var _p3 = A2(_elm_lang$core$Debug$log, 'EditSecurity', _p0._0);
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			default:
+			case 'EditSymbol':
 				var _p7 = _p0._2;
 				var _p6 = _p0._0;
 				var _p5 = _p0._1;
@@ -11723,6 +11912,28 @@ var _user$project$Main$update = F2(
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
+			case 'SaveSecurities':
+				var _p9 = _p0._0;
+				var _p8 = A2(_elm_lang$core$Debug$log, 'SaveSecurities', _p9);
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: A2(_user$project$Api$saveSecurities, _p9, _user$project$Main$HandleSaved)
+				};
+			default:
+				var _p10 = _p0._0;
+				if (_p10.ctor === 'Ok') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{securities: _p10._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					var _p11 = A2(_elm_lang$core$Debug$log, 'Error saving artist', _p10._0);
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
 		}
 	});
 var _user$project$Main$Show = function (a) {
@@ -11735,7 +11946,7 @@ var _user$project$Main$main = A2(
 		init: _user$project$Main$init,
 		view: _user$project$Main$view,
 		update: _user$project$Main$update,
-		subscriptions: function (_p8) {
+		subscriptions: function (_p12) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
 	})();

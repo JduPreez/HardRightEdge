@@ -3,7 +3,7 @@ module Api exposing (..)
 import Domain exposing (..)
 import Json.Decode as JsonD
 import Json.Encode as JsonE
-import Http
+import Http exposing (header)
 
 baseUrl : String
 baseUrl = "http://localhost:8080"
@@ -68,15 +68,18 @@ getPortfolio msg =
   Http.get (baseUrl ++ "/portfolio") securitiesDecoder
   |> Http.send msg
 
-saveSecurities : List Security -> (Result Http.Error Security -> msg) -> Cmd msg
+-- TODO: On the back-end it only saves and/or returns the 1st item !!!!!
+saveSecurities : (List Security) -> (Result Http.Error (List Security) -> msg) -> Cmd msg
 saveSecurities securities msg =
-  Http.request
-    { method  = "PUT",
-      headers = [],
-      url     = baseUrl ++ "/portfolio",
-      body    = Http.stringBody "application/json" <| encodeSecurities securities,
-      expect  = Http.expectJson securityDecoder,
-      timeout = Nothing,
-      withCredentials = False 
-    }
-  |> Http.send msg
+  let x = encodeSecurities (List.take 1 securities)
+      _ = Debug.log "JSON" x
+  in
+    Http.request
+      { method  = "PUT",
+        headers = [ header "Accept" "application/json" ],
+        url     = baseUrl ++ "/portfolio",
+        body    = Http.stringBody "application/json" <| encodeSecurities (List.take 1 securities),
+        expect  = Http.expectJson securitiesDecoder,
+        timeout = Nothing,
+        withCredentials = False
+      } |> Http.send msg

@@ -14,7 +14,7 @@ let main _ =
   let portfolioWebPart = rest "portfolio" 
                           [
                             GetAll portfolio
-                            Create savePortfolio
+                            Update savePortfolio
                             UpdateById saveSecurityById
                           ]
   startWebServer defaultConfig portfolioWebPart

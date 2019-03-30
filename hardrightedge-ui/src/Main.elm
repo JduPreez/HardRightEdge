@@ -43,6 +43,8 @@ type Msg
   | ShowSecurities  (Result Http.Error (List Security))
   | EditSecurity    Security
   | EditSymbol      Security Platform String
+  | SaveSecurities  (List Security)
+  | HandleSaved     (Result Http.Error (List Security))
   
 
 getPortfolioCmd : Cmd Msg
@@ -76,11 +78,25 @@ update msg model =
                                           security 
                                           platform 
                                           symbol }, Cmd.none)
-  
-    -- TODO:
-    -- 1. Add a SaveSecurities  action here
-    -- 2. Hook this up to Api.saveSecurities
-    -- 3. On back-end change API to support a list of securities
+
+    SaveSecurities securities ->
+      let _ = Debug.log "SaveSecurities" securities
+      in
+        (model, saveSecurities securities HandleSaved)
+
+    HandleSaved res ->
+      case res of
+        Result.Ok securities ->
+          -- TODO:  Maybe optimise this to better handle individual
+          --        securities
+          ( { model | securities = securities },
+            Cmd.none)
+
+        Result.Err err ->
+          let _ = Debug.log "Error saving artist" err
+          in
+            (model, Cmd.none)
+
 
 onBlurWithTargetValue : (String -> msg) -> Attribute msg
 onBlurWithTargetValue value =
@@ -88,6 +104,30 @@ onBlurWithTargetValue value =
 
 view: Model -> Html Msg
 view model =
+  div [ class "container" ]
+    [ div [ class "navbar-spacer" ] [],
+      nav [ class "navbar" ]
+        [ div [ class "container" ] 
+            [ ul [ class "navbar-list" ] 
+                [ li [ class "navbar-item" ] 
+                    [ a [ class "navbar-link",
+                          href "#home" ] 
+                        [ text "HardRightEdge" ] ],
+                  li [ class "navbar-item" ] 
+                    [ a [ class "navbar-link",
+                          href "#save",
+                          onClick <| SaveSecurities model.securities ] 
+                        [ text "Save" ] ],
+                  li [ class "navbar-item" ] 
+                    [ a [ class "navbar-link",
+                          href "#cancel" ] 
+                        [ text "Cancel" ] ] ] ] ],
+      div [ class "row main" ]
+        [ div [ class "twelve columns" ]
+            [ viewContent model ] ] ]
+
+viewContent: Model -> Html Msg
+viewContent model =
     table [ class "is-striped" ]
       [ thead []
         [ tr []

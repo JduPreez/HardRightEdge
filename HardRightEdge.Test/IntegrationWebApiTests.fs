@@ -27,7 +27,7 @@ let ``Serialization should deserialize Security.name`` () =
   // to their own module
   let sec = Stubs.testShare None None None
   let secSer = Stubs.testShare |> toJson
-  let secDeser : Domain.Security = fromJson secSer  
+  let secDeser : Domain.Security = fromJson secSer
   Assert.Equal(sec.name, secDeser.name)
 
 [<Fact>]
@@ -36,8 +36,18 @@ let ``Web API should create new securities`` () =
   let secListJson = secList |> toJson
   let response = Http.Request
                   ( host + "/portfolio",
-                    httpMethod = "POST",
+                    httpMethod = "PUT",
                     headers = [ Accept HttpContentTypes.Json ],
                     body = TextRequest secListJson )
   
+  Assert.True(response.StatusCode = 200)
+
+[<Fact>]
+let ``Web API should respond to OPTIONS`` () =
+  let response = Http.Request
+                  ( host + "/portfolio",
+                    httpMethod = "OPTIONS",
+                    headers = [ "Access-Control-Request-Headers", "content-type";
+                                "Access-Control-Request-Method", "PUT"] )
+
   Assert.True(response.StatusCode = 200)
