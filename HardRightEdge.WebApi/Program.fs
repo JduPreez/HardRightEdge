@@ -8,7 +8,6 @@ open HardRightEdge.Repositories
 open HardRightEdge.WebApi.Restful
 open HardRightEdge.Application
 
-
 [<EntryPoint>]
 let main _ =
   let portfolioWebPart = rest "portfolio" 

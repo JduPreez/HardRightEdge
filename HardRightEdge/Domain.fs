@@ -119,36 +119,36 @@ module Services =
   type saveSecurity           = Security  -> Security
   type tradesOpen             = unit      -> Trade seq
 
-  let getSyncSecurity (getShare: getSecurityByPlatform) (getShareFromDataFeed: getSecurityByDate) (saveShare: saveSecurity) (tradePlatfrm: string * Platform) (feedSymPlatfrm: string * Platform) =
+  let getSyncSecurity (getSecurity: getSecurityByPlatform) (getSecurityFromDataFeed: getSecurityByDate) (saveSecurity: saveSecurity) (tradePlatfrm: string * Platform) (feedSymPlatfrm: string * Platform) =
 
     let (symbol, platform) = tradePlatfrm
     let (feedSymbl, feedPlatfrm) = feedSymPlatfrm
 
     let securityNotFound = sprintf "Security '%s (%s)' wasn't found on platform '%O (%O)" symbol feedSymbl platform feedPlatfrm
 
-    let share = match getShare symbol platform with // TODO: Change this to not call getShare, & just match on a passed in Share record
-                | Some ({ prices = head :: _ } as s) ->
-                  // We have an existing share, with at least 1 historic share price,
-                  // so just update the prices to latest
-                  match getShareFromDataFeed feedSymbl (Some head.date) with
-                  | Some { prices = prcs } -> { s with prices = s.prices @ prcs }
-                  | _ -> failwith securityNotFound
+    let security =  match getSecurity symbol platform with // TODO: Change this to not call getShare, & just match on a passed in Share record
+                    | Some ({ prices = head :: _ } as s) ->
+                      // We have an existing share, with at least 1 historic share price,
+                      // so just update the prices to latest
+                      match getSecurityFromDataFeed feedSymbl (Some head.date) with
+                      | Some { prices = prcs } -> { s with prices = s.prices @ prcs }
+                      | _ -> failwith securityNotFound
 
-                | Some ({ prices = [] } as s) ->
-                  // We have an existing share, but without any historic prices
-                  match getShareFromDataFeed feedSymbl None with
-                  | Some { prices = prcs } -> { s with prices = prcs }
-                  | _ -> failwith securityNotFound
+                    | Some ({ prices = [] } as s) ->
+                      // We have an existing share, but without any historic prices
+                      match getSecurityFromDataFeed feedSymbl None with
+                      | Some { prices = prcs } -> { s with prices = prcs }
+                      | _ -> failwith securityNotFound
 
-                | None -> 
-                  // Completely new share, not stored locally yet, so just use whatever
-                  // the platform gives us
-                  match getShareFromDataFeed feedSymbl None with
-                  | Some s -> s
-                  | _ -> failwith securityNotFound
+                    | None -> 
+                      // Completely new share, not stored locally yet, so just use whatever
+                      // the platform gives us
+                      match getSecurityFromDataFeed feedSymbl None with
+                      | Some s -> s
+                      | _ -> failwith securityNotFound
 
     // Save share prices returned by data feed platform to DB
-    Some(saveShare share)
+    Some(saveSecurity security)
   
   let portfolio (tradesOpen: tradesOpen) (getSecurity: getSecurity) (dataFeedPlatfrm: Platform) (tradePlatfrm: Platform) =    
     let p () =

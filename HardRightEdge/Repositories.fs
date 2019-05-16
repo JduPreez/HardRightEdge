@@ -92,14 +92,14 @@ module Securities =
     cmd?name <- share.name
     { share with id = Some (unbox<int64> (cmd.ExecuteScalar())) }
 
-  let save (share: Security) =
-    let shr = match share with
-              | { id = Some _ } -> update share
-              | _               -> insert share
+  let save (security: Security) =
+    let sec = match security with
+              | { id = Some _ } -> update security
+              | _               -> insert security
 
-    let savedShare = {  shr with                        
-                          platforms = [| for sharePlatform in share.platforms ->
-                                            saveSharePlatform { sharePlatform with securityId = shr.id } |] }
+    let savedShare = {  sec with                        
+                          platforms = [| for securityPlatform in security.platforms ->
+                                            saveSharePlatform { securityPlatform with securityId = sec.id } |] }
     use db = new Db ()
     use cmd = db?Sql <- "INSERT INTO  share_price 
                                       ( share_id, 
@@ -122,8 +122,8 @@ module Securities =
                         SELECT CURRVAL(pg_get_serial_sequence('share_price','id'));"
     
     db.Open ()
-    { savedShare with prices = [  for price in share.prices do
-                                    cmd?share_id  <- shr.id
+    { savedShare with prices = [  for price in security.prices do
+                                    cmd?share_id  <- sec.id
                                     cmd?date      <- price.date
                                     cmd?openp     <- price.openp
                                     cmd?high      <- price.high
@@ -131,7 +131,7 @@ module Securities =
                                     cmd?close     <- price.close
                                     cmd?volume    <- price.volume
                                     cmd?adj_close <- price.adjClose                                    
-                                    yield { price with id = Some (cmd.ExecuteScalar<int64>()); securityId = shr.id } ] }      
+                                    yield { price with id = Some (cmd.ExecuteScalar<int64>()); securityId = sec.id } ] }      
 
   let get (id: int64) (from: DateTime option) =
     let days = if from.IsSome then int (DateTime.Now.Subtract(from.Value).TotalDays) else 1
