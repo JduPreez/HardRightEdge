@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Imports\Saxo\Trades_8077573_01-Jan-2017_31-Dec-2017.xlsx" />
+    <None Include="Imports\Saxo\Trades_01-Jan-2017_31-Dec-2017.xlsx" />
   </ItemGroup>
 
   <ItemGroup>
