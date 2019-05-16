@@ -4,6 +4,8 @@ import Api exposing (..)
 import Browser
 import Browser.Navigation as Nav
 import Domain exposing (..)
+import File exposing (File)
+import File.Select as Select
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (on, onClick, targetValue)
@@ -19,13 +21,6 @@ type alias Model =
       key         : Nav.Key,
       url         : Url}
 
-getPortfolioCmd : Cmd Msg
-getPortfolioCmd = Api.getPortfolio ShowSecurities
-
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url key =
-  (initialModel url key, getPortfolioCmd)
-
 initialModel : Url -> Nav.Key -> Model
 initialModel url key =
   { securities = [],
@@ -34,16 +29,24 @@ initialModel url key =
     url = url,
     key = key }
 
--- Upload application/vnd.ms-excel, text/csv
-
 type Msg
   = ChangedUrl Url 
   | ClickedLink Browser.UrlRequest
-  | ShowSecurities (Result Http.Error (List Security))
+  | ShowPortfolio (Result Http.Error (List Security))
+  | SavePortfolio (List Security)
+  | HandleSaved (Result Http.Error (List Security))
   | EditSecurity Security
   | EditSymbol Security Platform String
-  | SaveSecurities (List Security)
-  | HandleSaved (Result Http.Error (List Security))
+  | RequestFile
+  | SelectedFile File
+  --| LoadedFile String
+
+getPortfolioCmd : Cmd Msg
+getPortfolioCmd = Api.getPortfolio ShowPortfolio
+
+init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
+  (initialModel url key, getPortfolioCmd)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -58,7 +61,7 @@ update msg model =
 
     ChangedUrl url -> (model, Cmd.none)
 
-    ShowSecurities res ->
+    ShowPortfolio res ->
       case res of
         Result.Ok securities ->
           ({  model | securities = securities },
@@ -84,7 +87,7 @@ update msg model =
               symbol },
           Cmd.none)
 
-    SaveSecurities securities ->
+    SavePortfolio securities ->
       let _ = Debug.log "SaveSecurities" securities
       in
       (model, saveSecurities securities HandleSaved)
@@ -102,11 +105,15 @@ update msg model =
           in
           (model, Cmd.none)
 
+    RequestFile -> 
+      (model, 
+        Select.file ["application/vnd.ms-excel", "text/csv"] SelectedFile)
+    
+    SelectedFile file -> (model, Cmd.none)
 
 onBlurWithTargetValue : (String -> msg) -> Attribute msg
 onBlurWithTargetValue value =
     on "blur" (Json.map value targetValue)
-
 
 view : Model -> Browser.Document Msg
 view model =
@@ -119,24 +126,22 @@ view model =
                   [ ul [ class "navbar-list" ]
                       [ li [ class "navbar-item" ]
                           [ a
-                              [ class "navbar-link"
-                              , href "#home"
-                              ]
-                              [ text "HardRightEdge" ]
-                          ]
-                      , li [ class "navbar-item" ]
+                              [ class "navbar-link",
+                                href "#import", 
+                                onClick <| RequestFile ]
+                              [ text "Import" ]
+                          ],
+                        li [ class "navbar-item" ]
                           [ a
-                              [ class "navbar-link"
-                              , href "#save"
-                              , onClick <| SaveSecurities model.securities
-                              ]
+                              [ class "navbar-link",
+                                href "#save",
+                                onClick <| SavePortfolio model.securities ]
                               [ text "Save" ]
-                          ]
-                      , li [ class "navbar-item" ]
+                          ],
+                        li [ class "navbar-item" ]
                           [ a
-                              [ class "navbar-link"
-                              , href "#cancel"
-                              ]
+                              [ class "navbar-link",
+                                href "#cancel" ]
                               [ text "Cancel" ]
                           ]
                       ]
@@ -168,34 +173,29 @@ viewContent model =
                     , text "Yahoo! Finance"
                     ]
                 ]
-            ]
-        , tbody [] (List.map viewItem model.securities)
-        ]
+            ],
+          tbody [] (List.map viewItem model.securities) ]
 
 
 viewItem : Security -> Html Msg
 viewItem security =
     tr [ onClick <| EditSecurity security ]
-        [ td [] [ text security.name ]
-        , td []
+        [ td [] [ text security.name ],
+          td []
             [ --text (security.platforms |> symbol Saxo),
               input
-                [ type_ "text"
-                , value (security.platforms |> symbol Saxo)
-                , onBlurWithTargetValue <| EditSymbol security Saxo
-                ]
+                [ type_ "text",
+                  value (security.platforms |> symbol Saxo),
+                  onBlurWithTargetValue <| EditSymbol security Saxo ]
                 []
-            ]
-        , td []
+            ],
+          td []
             [ --text (security.platforms |> symbol Yahoo),
               input
-                [ type_ "text"
-                , value (security.platforms |> symbol Yahoo)
-                , onBlurWithTargetValue <| EditSymbol security Yahoo
-                ]
-                []
-            ]
-        ]
+                [ type_ "text",
+                  value (security.platforms |> symbol Yahoo),
+                  onBlurWithTargetValue <| EditSymbol security Yahoo ]
+                [] ]]
 
 main : Program () Model Msg
 main =

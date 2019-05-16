@@ -126,7 +126,7 @@ module Services =
 
     let securityNotFound = sprintf "Security '%s (%s)' wasn't found on platform '%O (%O)" symbol feedSymbl platform feedPlatfrm
 
-    let security =  match getSecurity symbol platform with // TODO: Change this to not call getShare, & just match on a passed in Share record
+    let security =  match getSecurity symbol platform with // TODO: Change this to not call getSecurity, & just match on a passed in Share record
                     | Some ({ prices = head :: _ } as s) ->
                       // We have an existing share, with at least 1 historic share price,
                       // so just update the prices to latest
