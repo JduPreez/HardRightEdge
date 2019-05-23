@@ -1,6 +1,7 @@
 module HardRightEdge.Domain
 
 open System
+open OfficeOpenXml
 
 let default' (deflt: unit -> 't) = deflt()
 
@@ -111,13 +112,18 @@ type Trade = {
   transaction:  Transaction
   commission:   Transaction option }
 
+type Document<'tf, 'tc> = {
+  file:     'tf option
+  content:  'tc option
+}
+
 module Services =
 
   type getSecurity            = string * Platform -> string * Platform -> Security option
   type getSecurityByPlatform  = string    -> Platform        -> Security option
   type getSecurityByDate      = string    -> DateTime option -> Security option  
   type saveSecurity           = Security  -> Security
-  type tradesOpen             = unit      -> Trade seq
+  type tradesOpen             = unit  -> Trade seq
 
   let getSyncSecurity (getSecurity: getSecurityByPlatform) (getSecurityFromDataFeed: getSecurityByDate) (saveSecurity: saveSecurity) (tradePlatfrm: string * Platform) (feedSymPlatfrm: string * Platform) =
 
@@ -151,24 +157,22 @@ module Services =
     Some(saveSecurity security)
   
   let portfolio (tradesOpen: tradesOpen) (getSecurity: getSecurity) (dataFeedPlatfrm: Platform) (tradePlatfrm: Platform) =    
-    let p () =
-      (tradesOpen())                                    // In this version, we just show some graphs
-      |> Seq.groupBy  (fun t -> t.security.name)        // for each unique share in the list of trades,
-      |> Seq.map      (fun x ->  x |> snd |> Seq.head)  // threrefore just pick 1 trade, because the share
-                                                        // info will be the same for each one in the groupBy.                                                      
-      |> Seq.map      (fun x ->
-                        let pfs = x.security.platforms 
-                                  |> Seq.map (fun sp -> sp.symbol, sp.platform)
+    (tradesOpen())                                    // In this version, we just show some graphs
+    |> Seq.groupBy  (fun t -> t.security.name)        // for each unique share in the list of trades,
+    |> Seq.map      (fun x ->  x |> snd |> Seq.head)  // threrefore just pick 1 trade, because the share
+                                                      // info will be the same for each one in the groupBy.                                                      
+    |> Seq.map      (fun x ->
+                      let pfs = x.security.platforms 
+                                |> Seq.map (fun sp -> sp.symbol, sp.platform)
 
-                        match Seq.tryFind (fun p -> snd p = dataFeedPlatfrm) pfs with
-                        | Some dataPlatfrm ->
-                          // If the share doesn't have a symbol for the data platform,
-                          // then don't synch it to the local database.
-                          getSecurity  (Seq.find (fun p -> snd p = tradePlatfrm) pfs)
-                                        dataPlatfrm
-                        | _ -> Some x.security) // No data platform, therefore only return the Trade's Share, without synching
+                      match Seq.tryFind (fun p -> snd p = dataFeedPlatfrm) pfs with
+                      | Some dataPlatfrm ->
+                        // If the share doesn't have a symbol for the data platform,
+                        // then don't synch it to the local database.
+                        getSecurity  (Seq.find (fun p -> snd p = tradePlatfrm) pfs)
+                                      dataPlatfrm
+                      | _ -> Some x.security) // No data platform, therefore only return the Trade's Share, without synching
                         
-      |> Seq.filter   (fun x -> x.IsSome)
-      |> Seq.map      (fun x -> x.Value)
-      |> Seq.toList      
-    p
+    |> Seq.filter   (fun x -> x.IsSome)
+    |> Seq.map      (fun x -> x.Value)
+    |> Seq.toList

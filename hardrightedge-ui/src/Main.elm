@@ -155,7 +155,6 @@ view model =
       ]
   }
 
-
 viewContent : Model -> Html Msg
 viewContent model =
     table [ class "is-striped" ]
@@ -175,7 +174,6 @@ viewContent model =
                 ]
             ],
           tbody [] (List.map viewItem model.securities) ]
-
 
 viewItem : Security -> Html Msg
 viewItem security =

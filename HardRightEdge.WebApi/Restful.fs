@@ -58,7 +58,7 @@ module Restful =
     let obj : 't = req.rawForm |> getString |> fromJson
     obj
 
-  type RestResource< ^T> = {
+  (*type RestResource< ^T> = {
     GetAll      : (unit -> ^T list) option
     GetById     : (int64 -> ^T option) option
     IsExists    : (int64 -> bool) option
@@ -66,14 +66,14 @@ module Restful =
     Update      : (^T list -> ^T list option) option
     UpdateById  : (int64 -> ^T -> ^T) option
     Delete      : (int64 -> unit) option
-  }
+  }*)
 
   type RestRes<'a> =
     | GetAll of (unit -> 'a list)
-    | Create of ('a list -> 'a list option)
+    | Create of ('a list -> 'a list)
     | GetById of (int64 -> 'a option)
     | IsExists of (int64 -> bool)
-    | Update of ('a list -> 'a list option)
+    | Update of ('a list -> 'a list)
     | UpdateById of (int64 -> 'a -> 'a)
     | Delete of (int64 -> unit)
 

@@ -15,7 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Imports\Saxo\Trades_01-Jan-2017_31-Dec-2017.xlsx" />
+    <Content Include="Imports\Saxo\Trades_01-Jan-2017_31-Dec-2017.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

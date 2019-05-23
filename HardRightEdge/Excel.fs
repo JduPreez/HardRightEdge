@@ -1,5 +1,5 @@
 ﻿// Current version of https://github.com/igorkulman/ExcelPackageF isn't being maintained, 
-// and there is an assembly mismatch issue with the version of EPPlus.
+// and there is an assembly mismatch issue with the version of EPPlus (https://github.com/JanKallman/EPPlus).
 // Therefore including source code here, so we can control the exact version of EPPlus.
 module HardRightEdge.Excel
 
@@ -13,9 +13,14 @@ open System.Xml
 /// <param name="index">The index of the worksheet in the file (starting from 1!)</param>
 /// <param name="filename">The input file.</param>
 /// <returns>Excel worksheet</returns>
-let getWorksheetByIndex (index:int) filename = 
+let getWorksheetByIndex (index: int) filename = 
     let file = new FileInfo(filename) 
     let xlPackage = new ExcelPackage(file)
+    xlPackage.Workbook.Worksheets.[index]
+
+let getWorksheetByIndex' (index: int) (file: byte []) =
+    let stream = new MemoryStream(file) 
+    let xlPackage = new ExcelPackage(stream)
     xlPackage.Workbook.Worksheets.[index]
 
 /// <summary>Reads an Excel file and returns the worksheet with the specified name</summary>

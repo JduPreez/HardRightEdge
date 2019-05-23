@@ -14,16 +14,18 @@ module Yahoo =
     | _ -> Assert.True(false)
 
 module Saxo =
+  
+  let worksheet =  (Saxo.worksheetFromFile "Saxo" Saxo.Trades.filePattern)
 
   [<Fact>]
   let ``Saxo should get trades`` () =
-    let trades = Saxo.trades (fun _ -> true) |> Seq.toList // Just get all trades
+    let trades = Saxo.trades worksheet (fun _ -> true) |> Seq.toList // Just get all trades
     Assert.NotEmpty(trades)
     Assert.Equal(33, trades.Length)
 
   [<Fact>]
   let ``Saxo should get open trades`` () =
-    let trades = Saxo.tradesOpen () |> Seq.toList
+    let trades = Saxo.tradesOpen worksheet <| () |> Seq.toList
     Assert.NotEmpty(trades)
 
     // 3 * 2 because 3 securities were closed, but we're removing

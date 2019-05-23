@@ -40,10 +40,7 @@ module Yahoo =
 let importsRoot = "Imports"
 
 module Saxo =
-  open HardRightEdge.Infrastructure.Common
   open HardRightEdge.Infrastructure.FileSystem
-  open System.Linq
-  open Unchecked
 
   module Trades =
     let filePattern = "Trades_*.xlsx"
@@ -102,8 +99,10 @@ module Saxo =
                                               currency        = accountId |> accountCurrency } }
     | _ -> None
 
-  let trades predicate = 
-    match box (query {
+  let trades worksheet predicate = 
+    match worksheet with
+    | Some ws ->
+    (*match box (query {
       for fl in files (importsRoot +/ "Saxo") Trades.filePattern do
         select fl
         headOrDefault }) with
@@ -115,11 +114,11 @@ module Saxo =
       // 3. leftOuterJoin closed transactions onto open transactions
       //    on Instrument & Amount (make sure to * -1 negative amounts to make them positive)
       // 4. Rows where the closed transaction in the join is null, are the remaining ones      
-      let worksheet   = Excel.getWorksheetByIndex 2 tradesFile // Trades with additional info
-      let maxRow      = Excel.getMaxRowNumber worksheet
+      let worksheet   = Excel.getWorksheetByIndex 2 tradesFile // Trades with additional info*)
+      let maxRow      = Excel.getMaxRowNumber ws
 
       seq { for row in 2 .. maxRow do              
-              let trade = worksheet 
+              let trade = ws 
                           |> Excel.getRow row 
                           |> toTrade
 
@@ -127,19 +126,41 @@ module Saxo =
               
     | _ -> Seq.empty<Trade>
 
-  let tradesOpen () = query {
-      for openTrade in trades (fun t -> t.IsSome && 
-                                        t.Value.isOpen && 
-                                        t.Value.transaction.quantity.IsSome) do
-      leftOuterJoin closedTrade in trades (fun t -> t.IsSome && 
-                                                    not t.Value.isOpen && 
-                                                    t.Value.type' = TradeType.Sold &&
-                                                    t.Value.transaction.quantity.IsSome)
+  let worksheetFromFile folder filePattern =
+    match box (query {
+      for fl in files (importsRoot +/ folder) filePattern do
+        select fl
+        headOrDefault }) with
+    | :? string as tradesFile -> 
+
+      // TODO:
+      // 1. Read file: TradeId, AccountID, Instrument, TradeTime, B/S, OpenClose, Amount, Price
+      // 2. Split trades into open & closed transactions
+      // 3. leftOuterJoin closed transactions onto open transactions
+      //    on Instrument & Amount (make sure to * -1 negative amounts to make them positive)
+      // 4. Rows where the closed transaction in the join is null, are the remaining ones      
+      Excel.getWorksheetByIndex 2 tradesFile |> Some // Trades with additional info
+    | _ -> None
+
+  let worksheetFromBin file = Excel.getWorksheetByIndex' 2 file |> Some
+
+  let tradesOpen worksheet = 
+    let func () = query {
+      //let trades' = trades <| (worksheetFromFile "Saxo" Trades.filePattern)
+      let trades' = trades worksheet
+      for openTrade in trades' (fun t ->  t.IsSome && 
+                                          t.Value.isOpen && 
+                                          t.Value.transaction.quantity.IsSome) do
+      leftOuterJoin closedTrade in trades' (fun t ->  t.IsSome && 
+                                                      not t.Value.isOpen && 
+                                                      t.Value.type' = TradeType.Sold &&
+                                                      t.Value.transaction.quantity.IsSome)
           on ((openTrade.security.name, openTrade.transaction.quantity.Value) = (closedTrade.security.name, (abs closedTrade.transaction.quantity.Value))) 
           into result
       for closedTrade in result do
       where (box closedTrade = null)
       select openTrade }
+    func
 
               
 

@@ -26,7 +26,7 @@ let ``Serialization should deserialize Security.name`` () =
   // When we have more serialization tests, we can move them
   // to their own module
   let sec = Stubs.testShare None None None
-  let secSer = Stubs.testShare |> toJson
+  let secSer = Stubs.testShare None None None |> toJson
   let secDeser : Domain.Security = fromJson secSer
   Assert.Equal(sec.name, secDeser.name)
 
