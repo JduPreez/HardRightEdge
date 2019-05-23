@@ -4,6 +4,8 @@ HardRightEdge is an investment portfolio management toolset written in F#. It im
 
 From there it provides a bunch of Open R statistics, and various F# FsLab scripts (https://fslab.org/) to analyse and visualise your porfolio performance.
 
+If you have questions or comments, contact me on Twitter at [jacquesdp](https://www.twitter.com/jacquesdp).
+
 ## Requirements
 
 1. x64 Windows (when .NET Core supports Type Providers I will look add cross platform support)
