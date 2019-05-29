@@ -27,3 +27,5 @@ If you have questions or comments, contact me on Twitter at [jacquesdp](https://
 ## Running tests
 
 Unit tests are written in XUnit. Just make sure to grab the Visual Studio XUnit test runner, and you're good to go.
+
+All WebAPI tests, those in HardRightEdge.Test.IntegrationWebApiTests, require a separate running instance of the API service. So go to the bin folder of HardRightEdge.WebApi, and 1st start an instance of HardRightEdge.WebApi.exe, before running them.

@@ -1,6 +1,7 @@
-module Api exposing (baseUrl, encodeSecurities, encodeSecurity, encodeSecurityPlatform, getPortfolio, platformDecoder, saveSecurities, securitiesDecoder, securityDecoder, securityPlatformDecoder, securityPlatformsDecoder)
+module Api exposing (baseUrl, encodeSecurities, encodeSecurity, encodeSecurityPlatform, getPortfolio, uploadPortfolioFile, platformDecoder, savePortfolio, securitiesDecoder, securityDecoder, securityPlatformDecoder, securityPlatformsDecoder)
 
 import Domain exposing (..)
+import File exposing (File)
 import Http exposing (header)
 import Json.Decode as JsonD
 import Json.Encode as JsonE
@@ -68,48 +69,57 @@ encodeSecurityPlatform securityPlatform =
 encodeSecurity : Security -> JsonE.Value
 encodeSecurity security =
     JsonE.object
-        [ ( "id"
-          , case security.id of
+        [ ( "id",
+            case security.id of
                 Nothing ->
                     JsonE.null
 
                 Just id ->
                     JsonE.int id
-          )
-        , ( "name", JsonE.string security.name )
-        , ( "previousName", JsonE.null )
-        , ( "prices", JsonE.list (\x -> JsonE.null) [] )
-        , ( "platforms", JsonE.list encodeSecurityPlatform security.platforms)
-        , ( "currency", JsonE.null ) ]
+          ),
+          ( "name", JsonE.string security.name ),
+          ( "previousName", JsonE.null ),
+          ( "prices", JsonE.list (\x -> JsonE.null) [] ),
+          ( "platforms", JsonE.list encodeSecurityPlatform security.platforms),
+          ( "currency", JsonE.null ) ]
 
 
 encodeSecurities : List Security -> JsonE.Value
 encodeSecurities securities = JsonE.list encodeSecurity securities
 
-getPortfolio : (Result Http.Error (List Security) -> msg) -> Cmd msg
-getPortfolio msg =
-  Http.get (baseUrl ++ "/portfolio") securitiesDecoder
-  |> Http.send msg
-
-
+getPortfolio : Cmd Msg
+getPortfolio =
+  Http.get 
+    { url = baseUrl ++ "/portfolio",
+      expect = Http.expectJson ShowPortfolio securitiesDecoder }
 
 -- TODO: Save both platforms: Saxo (working currently) and Yahoo! (TODO)
-saveSecurities : List Security -> (Result Http.Error (List Security) -> msg) -> Cmd msg
-saveSecurities securities msg =
-    let
-        x =
-            encodeSecurities securities
+savePortfolio : List Security -> Cmd Msg
+savePortfolio securities =
+  let
+    x =
+        encodeSecurities securities
+    _ =
+        Debug.log "JSON" x
+  in
+  Http.request
+    { method = "PUT",
+      headers = [ header "Accept" "application/json" ],
+      url = baseUrl ++ "/portfolio",
+      body = Http.jsonBody (encodeSecurities securities),
+      expect = Http.expectJson ShowPortfolio securitiesDecoder,
+      timeout = Nothing,
+      tracker = Nothing }
 
-        _ =
-            Debug.log "JSON" x
-    in
-    Http.request
-        { method = "PUT"
-        , headers = [ header "Accept" "application/json" ]
-        , url = baseUrl ++ "/portfolio"
-        , body = Http.jsonBody <| encodeSecurities securities
-        , expect = Http.expectJson securitiesDecoder
-        , timeout = Nothing
-        , withCredentials = False
-        }
-        |> Http.send msg
+uploadPortfolioFile : File -> Cmd Msg
+uploadPortfolioFile file =
+  let _ = Debug.log "uploadPortfolioFile " (File.mime file)
+  in
+  Http.request
+    { method = "POST",
+      headers = [ header "Accept" "application/json" ],
+      url = baseUrl ++ "/portfolio/file",
+      body = Http.fileBody file,
+      expect = Http.expectJson ShowPortfolio securitiesDecoder,
+      timeout = Nothing,
+      tracker = Nothing }

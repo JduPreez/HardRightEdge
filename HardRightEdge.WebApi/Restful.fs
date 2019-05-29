@@ -11,6 +11,8 @@ module Restful =
   open Suave.RequestErrors
   open Suave.Filters
   open Suave.Writers
+  open System.IO
+  open System.Text
   
   let setCORSHeaders =
     addHeader  "Access-Control-Allow-Origin" "*" 
@@ -39,13 +41,6 @@ module Restful =
 
   // 'a -> WebPart
   let inline JSON< ^T> (v: ^T) =     
-    (*let jsonSerializerSettings = new JsonSerializerSettings()
-    jsonSerializerSettings.Converters.Add(new IdiomaticDuConverter())
-    jsonSerializerSettings.ContractResolver <- new CamelCasePropertyNamesContractResolver()
-    jsonSerializerSettings.NullValueHandling <- NullValueHandling.Ignore
-
-    JsonConvert.SerializeObject(v, jsonSerializerSettings)*)
-    //Compact.serialize(v)
     toJson v
     |> OK 
     >=> Writers.setMimeType "application/json; charset=utf-8"
@@ -54,23 +49,21 @@ module Restful =
     //Compact.deserialize(json) |> unbox
 
   let inline getResourceFromReq (req : HttpRequest) : 't = 
-    let getString rawForm = System.Text.Encoding.UTF8.GetString(rawForm)
+    let getString rawForm = Encoding.UTF8.GetString(rawForm)
     let obj : 't = req.rawForm |> getString |> fromJson
     obj
 
-  (*type RestResource< ^T> = {
-    GetAll      : (unit -> ^T list) option
-    GetById     : (int64 -> ^T option) option
-    IsExists    : (int64 -> bool) option
-    Create      : (^T list -> ^T list option) option
-    Update      : (^T list -> ^T list option) option
-    UpdateById  : (int64 -> ^T -> ^T) option
-    Delete      : (int64 -> unit) option
-  }*)
+  let inline getResourceFromReqFiles (req: HttpRequest) : byte [] =
+    req.rawForm
+    (*match req.files with
+    | head :: _ -> File.ReadAllBytes(head.tempFilePath)
+    | [] -> Array.empty<byte>*)
+
 
   type RestRes<'a> =
     | GetAll of (unit -> 'a list)
     | Create of ('a list -> 'a list)
+    | Upload of (byte [] -> 'a list)
     | GetById of (int64 -> 'a option)
     | IsExists of (int64 -> bool)
     | Update of ('a list -> 'a list)
@@ -89,12 +82,14 @@ module Restful =
      
     let toWebParts (webParts: ((HttpContext -> Async<HttpContext option>) list) * ((HttpContext -> Async<HttpContext option>) list)) method =
       ((match method with
-        | GetAll(getAll) ->           
+        | GetAll getAll ->           
           (GET >=> warbler (fun _ -> getAll () |> JSON)) :: fst webParts
         | Create create ->           
           (POST >=> request (getResourceFromReq >> create >> JSON)) :: fst webParts
-        | Update(update) -> 
+        | Update update -> 
           (PUT >=> request (getResourceFromReq >> update >> JSON)) :: fst webParts
+        | Upload upload ->
+          (POST >=> request (getResourceFromReqFiles >> upload >> JSON)) :: fst webParts
         | _ -> fst webParts), 
         match method with
         | GetById(getById) ->        

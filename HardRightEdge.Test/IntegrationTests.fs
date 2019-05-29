@@ -15,7 +15,7 @@ module Yahoo =
 
 module Saxo =
   
-  let worksheet =  (Saxo.worksheetFromFile "Saxo" Saxo.Trades.filePattern)
+  let worksheet =  (Saxo.worksheetFromFile Saxo.folder Saxo.filePattern)
 
   [<Fact>]
   let ``Saxo should get trades`` () =

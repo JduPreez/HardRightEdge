@@ -1,9 +1,6 @@
 module HardRightEdge.Repositories
 
 open System
-open System.Net
-open System.Data.Common
-open Option
 open Microsoft.FSharp.Core.Operators.Unchecked
 
 open HardRightEdge.Domain
@@ -12,29 +9,29 @@ open HardRightEdge.Infrastructure.Common
 
 module Securities =
     
-  let private saveSharePlatform (sharePlatform: SecurityPlatform) =
+  let private saveSecurityPlatform (securityPlatform: SecurityPlatform) =
     use db = new Db ()
-    use cmd = db?Sql <- "INSERT INTO    share_platform
-                                        ( share_id,
+    use cmd = db?Sql <- "INSERT INTO    security_platform
+                                        ( security_id,
                                           platform_id,
                                           symbol )
-                        VALUES          ( :share_id,
+                        VALUES          ( :security_id,
                                           :platform_id,
                                           :symbol )
                         ON CONFLICT     ( symbol,
                                           platform_id) 
                         DO UPDATE          
-                        SET share_id = :share_id"
+                        SET security_id = :security_id"
     db.Open()
-    cmd?share_id            <- sharePlatform.securityId
-    cmd?platform_id         <- int sharePlatform.platform
-    cmd?symbol              <- sharePlatform.symbol
+    cmd?security_id         <- securityPlatform.securityId
+    cmd?platform_id         <- int securityPlatform.platform
+    cmd?symbol              <- securityPlatform.symbol
     cmd.ExecuteNonQuery ()  |> ignore
-    sharePlatform
+    securityPlatform
 
-  let private getSharePriceByShare (shareId: int64) (days: int) (db: Db) =
+  let private getSecurityPriceBySecurity (securityId: int64) (days: int) (db: Db) =
     use cmd = db?Sql <- (sprintf "SELECT    id,
-                                            share_id,
+                                            security_id,
                                             date,
                                             openp,
                                             high,
@@ -42,67 +39,67 @@ module Securities =
                                             close,
                                             volume,
                                             adj_close
-                                  FROM      share_price
-                                  WHERE     share_id = :share_id
+                                  FROM      security_price
+                                  WHERE     security_id = :security_id
                                   ORDER BY  id DESC                                  
                                   LIMIT     %i" days)
 
     if db.IsClosed then db.Open()
     
-    cmd?share_id <- shareId
+    cmd?security_id <- securityId
     
     use rdr = cmd.ExecuteReader()
     [ while rdr.Read() do      
-        yield { id       = ofObj rdr?id
-                securityId  = ofObj rdr?share_id
-                date     = rdr?date
-                openp    = rdr?openp
-                high     = rdr?high
-                low      = rdr?low
-                close    = rdr?close
-                adjClose = ofObj rdr?adj_close
-                volume   = rdr?volume } ]
+        yield { id          = ofObj rdr?id
+                securityId  = ofObj rdr?security_id
+                date        = rdr?date
+                openp       = rdr?openp
+                high        = rdr?high
+                low         = rdr?low
+                close       = rdr?close
+                adjClose    = ofObj rdr?adj_close
+                volume      = rdr?volume } ]
 
-  let private getSharePriceByShare' (shareId: int64) (days: int) =
+  let private getSecurityPriceBySecurity' (securityId: int64) (days: int) =
     use db = new Db()
-    getSharePriceByShare shareId days db
+    getSecurityPriceBySecurity securityId days db
 
-  let update (share: Security) =
+  let update (security: Security) =
     use db = new Db ()
-    use cmd = db?Sql <- "UPDATE share
-                          SET name = :name,
-                              previous_name = :previous_name
-                          where id = :id"
+    use cmd = db?Sql <- "UPDATE security
+                          SET   name = :name,
+                                previous_name = :previous_name
+                          WHERE id = :id"
 
     db.Open ()
-    cmd?name <- share.name
-    cmd?id <- share.id
-    cmd?previous_name <- share.previousName
+    cmd?name          <- security.name
+    cmd?id            <- security.id
+    cmd?previous_name <- security.previousName
     cmd.ExecuteNonQuery () |> ignore
-    share
+    security
     
-  let insert (share: Security) =
+  let insert (security: Security) =
     use db = new Db ()
-    use cmd = db?Sql <- "INSERT INTO  share
+    use cmd = db?Sql <- "INSERT INTO  security
                                       ( name )
                         VALUES        ( :name );
 
-                        SELECT CURRVAL(pg_get_serial_sequence('share','id'));"
+                        SELECT CURRVAL(pg_get_serial_sequence('security','id'));"
     db.Open ()
-    cmd?name <- share.name
-    { share with id = Some (unbox<int64> (cmd.ExecuteScalar())) }
+    cmd?name <- security.name
+    { security with id = Some (unbox<int64> (cmd.ExecuteScalar())) }
 
   let save (security: Security) =
     let sec = match security with
               | { id = Some _ } -> update security
               | _               -> insert security
 
-    let savedShare = {  sec with                        
-                          platforms = [| for securityPlatform in security.platforms ->
-                                            saveSharePlatform { securityPlatform with securityId = sec.id } |] }
+    let savedSec = {  sec with                        
+                        platforms = [| for securityPlatform in security.platforms ->
+                                        saveSecurityPlatform { securityPlatform with securityId = sec.id } |] }
     use db = new Db ()
-    use cmd = db?Sql <- "INSERT INTO  share_price 
-                                      ( share_id, 
+    use cmd = db?Sql <- "INSERT INTO  security_price 
+                                      ( security_id, 
                                         date, 
                                         openp, 
                                         high, 
@@ -110,7 +107,7 @@ module Securities =
                                         close, 
                                         volume, 
                                         adj_close  ) 
-                          VALUES      ( :share_id, 
+                          VALUES      ( :security_id, 
                                         :date, 
                                         :openp, 
                                         :high, 
@@ -119,37 +116,37 @@ module Securities =
                                         :volume, 
                                         :adj_close );
 
-                        SELECT CURRVAL(pg_get_serial_sequence('share_price','id'));"
+                        SELECT CURRVAL(pg_get_serial_sequence('security_price','id'));"
     
     db.Open ()
-    { savedShare with prices = [  for price in security.prices do
-                                    cmd?share_id  <- sec.id
-                                    cmd?date      <- price.date
-                                    cmd?openp     <- price.openp
-                                    cmd?high      <- price.high
-                                    cmd?low       <- price.low
-                                    cmd?close     <- price.close
-                                    cmd?volume    <- price.volume
-                                    cmd?adj_close <- price.adjClose                                    
+    { savedSec with prices = [  for price in security.prices do
+                                    cmd?security_id <- sec.id
+                                    cmd?date        <- price.date
+                                    cmd?openp       <- price.openp
+                                    cmd?high        <- price.high
+                                    cmd?low         <- price.low
+                                    cmd?close       <- price.close
+                                    cmd?volume      <- price.volume
+                                    cmd?adj_close   <- price.adjClose                                    
                                     yield { price with id = Some (cmd.ExecuteScalar<int64>()); securityId = sec.id } ] }      
 
-  let get (id: int64) (from: DateTime option) =
+  let getById (id: int64) (from: DateTime option) =
     let days = if from.IsSome then int (DateTime.Now.Subtract(from.Value).TotalDays) else 1
 
     use db = new Db()
-    // TODO: Can't just left join on share_platform, as a share will multiple ones, causing duplicates
-    use cmd = db?Sql <- "SELECT     share.id,
+    // TODO: Can't just left join on security_platform, as a security will multiple platforms will return duplicates
+    use cmd = db?Sql <- "SELECT     security.id,
                                     name,
                                     previous_name,
                                     platform_id,
                                     symbol
-                          FROM      share
+                          FROM      security
 
-                          LEFT JOIN share_platform
-                          ON        share_platform.share_id = share.id
+                          LEFT JOIN security_platform
+                          ON        security_platform.security_id = security.id
                           
-                          WHERE     share.id = :id
-                          ORDER BY  share.id"
+                          WHERE     security.id = :id
+                          ORDER BY  security.id"
     cmd?id <- id
 
     db.Open()
@@ -164,48 +161,84 @@ module Securities =
       else None)) with
     | Some security -> 
       // 1st dispose previous reader before creating a new one
-      Some { security with prices = getSharePriceByShare id days db }
+      Some { security with prices = getSecurityPriceBySecurity id days db }
     | _ -> None
 
   let getBySymbol (symbol: string) (platform: Platform) =
     use db = new Db()
-    use cmd = db?Sql <- "SELECT       share.id,
-                                      share.name,
-                                      share.previous_name,
-                                      share_platform.platform_id,
-                                      share_platform.symbol
+    use cmd = db?Sql <- "SELECT       security.id,
+                                      security.name,
+                                      security.previous_name,
+                                      security_platform.platform_id,
+                                      security_platform.symbol
 
-                          FROM        share
+                          FROM        security
 
-                          INNER JOIN  share_platform
-                          ON          share_platform.share_id = share.id
+                          INNER JOIN  security_platform
+                          ON          security_platform.security_id = security.id
 
-                          WHERE       share_platform.symbol = :symbol
-                          AND         share_platform.platform_id = :platform_id
+                          WHERE       security_platform.symbol = :symbol
+                          AND         security_platform.platform_id = :platform_id
 
                           LIMIT 1"
     cmd?symbol      <- symbol
     cmd?platform_id <- int platform
 
     db.Open()
-    let share = using (cmd.ExecuteReader()) (fun rdr ->
+    let sec = using (cmd.ExecuteReader()) (fun rdr ->
                 if rdr.Read()
                 then
                   Some {  id            = Some rdr?id
                           name          = rdr?name
                           currency      = None
                           previousName  = rdr?previous_name
-                          prices        = List.empty<SecurityPrice>
+                          prices        = []
                           platforms     = seq { yield { securityId  = Some rdr?id
                                                         platform    = enum rdr?platform_id
                                                         symbol      = rdr?symbol } } }
                 else
                   None)
 
-    match share with
+    match sec with
     | Some ({ id = Some id' } as s) -> 
-      Some { s with prices =  getSharePriceByShare id' 1 db }
+      Some { s with prices =  getSecurityPriceBySecurity id' 1 db }
     | _ -> None
+
+  let get (from: DateTime option) =
+    let days = if from.IsSome then int (DateTime.Now.Subtract(from.Value).TotalDays) else 1
+    
+    use db = new Db()
+    use cmd = db?Sql <- "SELECT     security.id,
+                                    security.name,
+                                    security.previous_name,
+                                    security_platform.platform_id,
+                                    security_platform.symbol
+
+                          FROM      security
+    
+                          LEFT JOIN security_platform
+                          ON        security_platform.security_id = security.id
+                          
+                          ORDER BY  security.id"
+    db.Open()
+
+    let securities = using (cmd.ExecuteReader()) (fun rdr ->
+                      [while rdr.Read() do
+                        yield { id            = ofObj rdr?id
+                                name          = rdr?name
+                                currency      = None
+                                previousName  = rdr?previous_name                
+                                prices        = []
+                                platforms     = seq { yield { securityId = ofObj rdr?id
+                                                              platform = enum rdr?platform_id
+                                                              symbol = rdr?symbol } } }]
+                        |> List.groupBy (fun sec -> sec.id)
+                        |> List.map (fun (_, secs) -> 
+                                      { secs.Head with
+                                          platforms = Seq.collect (fun s -> s.platforms) secs }))
+
+    [for sec in securities -> 
+      { sec with prices = getSecurityPriceBySecurity sec.id.Value days db }]
 
 // This is for the DB
 // Integration.Saxo is for the Excel

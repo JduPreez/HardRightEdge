@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), getPortfolioCmd, init, initialModel, main, onBlurWithTargetValue, update, view, viewContent, viewItem)
+module Main exposing (Model, getPortfolioCmd, init, initialModel, main, onBlurWithTargetValue, update, view, viewContent, viewItem)
 
 import Api exposing (..)
 import Browser
@@ -15,11 +15,11 @@ import Routing exposing (Route)
 import Url exposing (Url)
 
 type alias Model =
-    { securities  : List Security,
-      security    : Maybe Security,
-      errors      : List String,
-      key         : Nav.Key,
-      url         : Url}
+  { securities:     List Security,
+    security:       Maybe Security,
+    errors:         List String,
+    key:            Nav.Key,
+    url:            Url}
 
 initialModel : Url -> Nav.Key -> Model
 initialModel url key =
@@ -29,22 +29,10 @@ initialModel url key =
     url = url,
     key = key }
 
-type Msg
-  = ChangedUrl Url 
-  | ClickedLink Browser.UrlRequest
-  | ShowPortfolio (Result Http.Error (List Security))
-  | SavePortfolio (List Security)
-  | HandleSaved (Result Http.Error (List Security))
-  | EditSecurity Security
-  | EditSymbol Security Platform String
-  | RequestFile
-  | SelectedFile File
-  --| LoadedFile String
-
 getPortfolioCmd : Cmd Msg
-getPortfolioCmd = Api.getPortfolio ShowPortfolio
+getPortfolioCmd = getPortfolio
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init : () -> Url -> Nav.Key -> (Model, Cmd Msg)
 init flags url key =
   (initialModel url key, getPortfolioCmd)
 
@@ -78,7 +66,7 @@ update msg model =
       (model, Cmd.none)
 
     EditSymbol security platform symbol ->
-      let _ = Debug.log "EditSymbol" ( symbol, platform, security )
+      let _ = Debug.log "EditSymbol" (symbol, platform, security)
       in ({ model
             | securities =
               updateIn model.securities
@@ -88,28 +76,31 @@ update msg model =
           Cmd.none)
 
     SavePortfolio securities ->
-      let _ = Debug.log "SaveSecurities" securities
+      let _ = Debug.log "SavePortfolio" securities
       in
-      (model, saveSecurities securities HandleSaved)
+      (model, savePortfolio securities)
 
-    HandleSaved savedRes ->
-      case savedRes of
-        Result.Ok securities ->
-          -- TODO:  Maybe optimise this to better handle individual
-          --        securities
-          ({  model | securities = securities },
-              Cmd.none)
+    --HandleSaved savedRes ->
+    --  case savedRes of
+    --    Result.Ok securities ->
+    --      -- TODO:  Maybe optimise this to better handle individual
+    --      --        securities
+    --      ({  model | securities = securities },
+    --          Cmd.none)
 
-        Result.Err err ->
-          let _ = Debug.log "Error saving artist" err
-          in
-          (model, Cmd.none)
+    --    Result.Err err ->
+    --      let _ = Debug.log "Error saving artist" err
+    --      in
+    --      (model, Cmd.none)
 
     RequestFile -> 
       (model, 
         Select.file ["application/vnd.ms-excel", "text/csv"] SelectedFile)
     
-    SelectedFile file -> (model, Cmd.none)
+    SelectedFile file -> 
+      let _ = Debug.log "SelectedFile" ""
+      in
+      (model, uploadPortfolioFile file)
 
 onBlurWithTargetValue : (String -> msg) -> Attribute msg
 onBlurWithTargetValue value =
@@ -160,17 +151,15 @@ viewContent model =
     table [ class "is-striped" ]
         [ thead []
             [ tr []
-                [ th [] [ text "Security" ]
-                , th []
-                    [ text "Symbol"
-                    , br [] []
-                    , text "Saxo/DMA"
-                    ]
-                , th []
-                    [ text "Symbol"
-                    , br [] []
-                    , text "Yahoo! Finance"
-                    ]
+                [ th [] [ text "Security" ],
+                  th []
+                    [ text "Symbol",
+                      br [] [],
+                      text "Saxo/DMA" ],
+                  th []
+                    [ text "Symbol",
+                      br [] [],
+                      text "Yahoo! Finance" ]
                 ]
             ],
           tbody [] (List.map viewItem model.securities) ]

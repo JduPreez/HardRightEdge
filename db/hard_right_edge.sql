@@ -2,10 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.5.3
--- Dumped by pg_dump version 9.5.3
-
--- Started on 2018-04-28 20:22:48
+-- NB! Run from command prompt: psql -U postgres -f hard_right_edge.sql
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -15,9 +12,18 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
-CREATE ROLE hard_right_edge_app LOGIN ENCRYPTED PASSWORD 'md5cd3df2fc5f80cc9f8881b442fe3582ee'
-  CREATEDB
-   VALID UNTIL 'infinity';
+DO 
+$do$
+BEGIN
+  IF NOT EXISTS (SELECT                      
+                FROM   pg_catalog.pg_roles
+                WHERE  rolname = 'hard_right_edge_app') THEN
+    CREATE ROLE hard_right_edge_app LOGIN ENCRYPTED PASSWORD 'md5cd3df2fc5f80cc9f8881b442fe3582ee'
+      CREATEDB
+      VALID UNTIL 'infinity';
+  END IF;
+END;
+$do$;
 
 DROP DATABASE hard_right_edge;
 --
@@ -46,9 +52,16 @@ SET row_security = off;
 --
 
 CREATE SCHEMA public;
-
-
-ALTER SCHEMA public OWNER TO postgres;
+DO 
+$do$
+BEGIN
+  IF NOT EXISTS (SELECT schema_name 
+                FROM    information_schema.schemata 
+                WHERE   schema_name = 'public') THEN
+    ALTER SCHEMA public OWNER TO postgres;
+  END IF;
+END;
+$do$;
 
 --
 -- TOC entry 2131 (class 0 OID 0)
@@ -84,24 +97,24 @@ SET default_with_oids = false;
 
 --
 -- TOC entry 184 (class 1259 OID 74332)
--- Name: share; Type: TABLE; Schema: public; Owner: hard_right_edge_app
+-- Name: security; Type: TABLE; Schema: public; Owner: hard_right_edge_app
 --
 
-CREATE TABLE share (
+CREATE TABLE security (
     id bigint NOT NULL,
     name character varying(150) NOT NULL,
     previous_name character varying(150)
 );
 
 
-ALTER TABLE share OWNER TO hard_right_edge_app;
+ALTER TABLE security OWNER TO hard_right_edge_app;
 
 --
 -- TOC entry 183 (class 1259 OID 74330)
--- Name: share_id_seq; Type: SEQUENCE; Schema: public; Owner: hard_right_edge_app
+-- Name: security_id_seq; Type: SEQUENCE; Schema: public; Owner: hard_right_edge_app
 --
 
-CREATE SEQUENCE share_id_seq
+CREATE SEQUENCE security_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -109,39 +122,39 @@ CREATE SEQUENCE share_id_seq
     CACHE 1;
 
 
-ALTER TABLE share_id_seq OWNER TO hard_right_edge_app;
+ALTER TABLE security_id_seq OWNER TO hard_right_edge_app;
 
 --
 -- TOC entry 2134 (class 0 OID 0)
 -- Dependencies: 183
--- Name: share_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: hard_right_edge_app
+-- Name: security_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER SEQUENCE share_id_seq OWNED BY share.id;
+ALTER SEQUENCE security_id_seq OWNED BY security.id;
 
 
 --
 -- TOC entry 185 (class 1259 OID 74338)
--- Name: share_platform; Type: TABLE; Schema: public; Owner: hard_right_edge_app
+-- Name: security_platform; Type: TABLE; Schema: public; Owner: hard_right_edge_app
 --
 
-CREATE TABLE share_platform (
-    share_id bigint NOT NULL,
+CREATE TABLE security_platform (
+    security_id bigint NOT NULL,
     platform_id integer NOT NULL,
     symbol character varying(150) NOT NULL
 );
 
 
-ALTER TABLE share_platform OWNER TO hard_right_edge_app;
+ALTER TABLE security_platform OWNER TO hard_right_edge_app;
 
 --
 -- TOC entry 187 (class 1259 OID 74373)
--- Name: share_price; Type: TABLE; Schema: public; Owner: hard_right_edge_app
+-- Name: security_price; Type: TABLE; Schema: public; Owner: hard_right_edge_app
 --
 
-CREATE TABLE share_price (
+CREATE TABLE security_price (
     id bigint NOT NULL,
-    share_id bigint NOT NULL,
+    security_id bigint NOT NULL,
     date date NOT NULL,
     openp double precision NOT NULL,
     high double precision NOT NULL,
@@ -152,14 +165,14 @@ CREATE TABLE share_price (
 );
 
 
-ALTER TABLE share_price OWNER TO hard_right_edge_app;
+ALTER TABLE security_price OWNER TO hard_right_edge_app;
 
 --
 -- TOC entry 186 (class 1259 OID 74371)
--- Name: share_price_id_seq; Type: SEQUENCE; Schema: public; Owner: hard_right_edge_app
+-- Name: security_price_id_seq; Type: SEQUENCE; Schema: public; Owner: hard_right_edge_app
 --
 
-CREATE SEQUENCE share_price_id_seq
+CREATE SEQUENCE security_price_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -167,15 +180,15 @@ CREATE SEQUENCE share_price_id_seq
     CACHE 1;
 
 
-ALTER TABLE share_price_id_seq OWNER TO hard_right_edge_app;
+ALTER TABLE security_price_id_seq OWNER TO hard_right_edge_app;
 
 --
 -- TOC entry 2135 (class 0 OID 0)
 -- Dependencies: 186
--- Name: share_price_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: hard_right_edge_app
+-- Name: security_price_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER SEQUENCE share_price_id_seq OWNED BY share_price.id;
+ALTER SEQUENCE security_price_id_seq OWNED BY security_price.id;
 
 
 --
@@ -198,10 +211,10 @@ ALTER TABLE transaction OWNER TO hard_right_edge_app;
 
 --
 -- TOC entry 181 (class 1259 OID 74316)
--- Name: transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: hard_right_edge_app
+-- Name: transaction_id_seq; Type: SEQUENCE; Schema: public; Owner: hard_right_edge_app
 --
 
-CREATE SEQUENCE transactions_id_seq
+CREATE SEQUENCE transaction_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -209,7 +222,7 @@ CREATE SEQUENCE transactions_id_seq
     CACHE 1;
 
 
-ALTER TABLE transactions_id_seq OWNER TO hard_right_edge_app;
+ALTER TABLE transaction_id_seq OWNER TO hard_right_edge_app;
 
 --
 -- TOC entry 2136 (class 0 OID 0)
@@ -217,7 +230,7 @@ ALTER TABLE transactions_id_seq OWNER TO hard_right_edge_app;
 -- Name: transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER SEQUENCE transactions_id_seq OWNED BY transaction.id;
+ALTER SEQUENCE transaction_id_seq OWNED BY transaction.id;
 
 
 --
@@ -225,7 +238,7 @@ ALTER SEQUENCE transactions_id_seq OWNED BY transaction.id;
 -- Name: id; Type: DEFAULT; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER TABLE ONLY share ALTER COLUMN id SET DEFAULT nextval('share_id_seq'::regclass);
+ALTER TABLE ONLY security ALTER COLUMN id SET DEFAULT nextval('security_id_seq'::regclass);
 
 
 --
@@ -233,7 +246,7 @@ ALTER TABLE ONLY share ALTER COLUMN id SET DEFAULT nextval('share_id_seq'::regcl
 -- Name: id; Type: DEFAULT; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER TABLE ONLY share_price ALTER COLUMN id SET DEFAULT nextval('share_price_id_seq'::regclass);
+ALTER TABLE ONLY security_price ALTER COLUMN id SET DEFAULT nextval('security_price_id_seq'::regclass);
 
 
 --
@@ -241,34 +254,34 @@ ALTER TABLE ONLY share_price ALTER COLUMN id SET DEFAULT nextval('share_price_id
 -- Name: id; Type: DEFAULT; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER TABLE ONLY transaction ALTER COLUMN id SET DEFAULT nextval('transactions_id_seq'::regclass);
+ALTER TABLE ONLY transaction ALTER COLUMN id SET DEFAULT nextval('transaction_id_seq'::regclass);
 
 
 --
 -- TOC entry 2004 (class 2606 OID 74361)
--- Name: share_pk; Type: CONSTRAINT; Schema: public; Owner: hard_right_edge_app
+-- Name: security_pk; Type: CONSTRAINT; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER TABLE ONLY share
-    ADD CONSTRAINT share_pk PRIMARY KEY (id);
+ALTER TABLE ONLY security
+    ADD CONSTRAINT security_pk PRIMARY KEY (id);
 
 
 --
 -- TOC entry 2006 (class 2606 OID 74349)
--- Name: share_platform_pk; Type: CONSTRAINT; Schema: public; Owner: hard_right_edge_app
+-- Name: security_platform_pk; Type: CONSTRAINT; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER TABLE ONLY share_platform
-    ADD CONSTRAINT share_platform_pk PRIMARY KEY (symbol, platform_id);
+ALTER TABLE ONLY security_platform
+    ADD CONSTRAINT security_platform_pk PRIMARY KEY (symbol, platform_id);
 
 
 --
 -- TOC entry 2009 (class 2606 OID 74378)
--- Name: share_price_pk; Type: CONSTRAINT; Schema: public; Owner: hard_right_edge_app
+-- Name: security_price_pk; Type: CONSTRAINT; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER TABLE ONLY share_price
-    ADD CONSTRAINT share_price_pk PRIMARY KEY (id);
+ALTER TABLE ONLY security_price
+    ADD CONSTRAINT security_price_pk PRIMARY KEY (id);
 
 
 --
@@ -282,28 +295,28 @@ ALTER TABLE ONLY transaction
 
 --
 -- TOC entry 2007 (class 1259 OID 74384)
--- Name: fki_share_price_share_fk; Type: INDEX; Schema: public; Owner: hard_right_edge_app
+-- Name: fki_security_price_security_fk; Type: INDEX; Schema: public; Owner: hard_right_edge_app
 --
 
-CREATE INDEX fki_share_price_share_fk ON share_price USING btree (share_id);
+CREATE INDEX fki_security_price_security_fk ON security_price USING btree (security_id);
 
 
 --
 -- TOC entry 2010 (class 2606 OID 74362)
--- Name: share_platform_share_fk; Type: FK CONSTRAINT; Schema: public; Owner: hard_right_edge_app
+-- Name: security_platform_security_fk; Type: FK CONSTRAINT; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER TABLE ONLY share_platform
-    ADD CONSTRAINT share_platform_share_fk FOREIGN KEY (share_id) REFERENCES share(id);
+ALTER TABLE ONLY security_platform
+    ADD CONSTRAINT security_platform_security_fk FOREIGN KEY (security_id) REFERENCES security(id);
 
 
 --
 -- TOC entry 2011 (class 2606 OID 74379)
--- Name: share_price_share_fk; Type: FK CONSTRAINT; Schema: public; Owner: hard_right_edge_app
+-- Name: security_price_security_fk; Type: FK CONSTRAINT; Schema: public; Owner: hard_right_edge_app
 --
 
-ALTER TABLE ONLY share_price
-    ADD CONSTRAINT share_price_share_fk FOREIGN KEY (share_id) REFERENCES share(id);
+ALTER TABLE ONLY security_price
+    ADD CONSTRAINT security_price_security_fk FOREIGN KEY (security_id) REFERENCES security(id);
 
 
 --

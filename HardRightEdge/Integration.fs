@@ -1,8 +1,9 @@
 module HardRightEdge.Integration
 
+open HardRightEdge.Domain
+open HardRightEdge.Infrastructure.FileSystem
 open System
 open YahooFinanceAPI
-open HardRightEdge.Domain
 
 module Yahoo = 
 
@@ -39,12 +40,16 @@ module Yahoo =
 
 let importsRoot = "Imports"
 
-module Saxo =
-  open HardRightEdge.Infrastructure.FileSystem
+let tradesFile parentFolder subFolder filePattern = 
+  query { for fl in files (parentFolder +/ subFolder) filePattern do
+            select fl
+            headOrDefault }
 
-  module Trades =
-    let filePattern = "Trades_*.xlsx"
-    let datePattern = "dd/MM/yyyy"
+module Saxo =
+  
+  let folder = "Saxo"
+  let filePattern = "Trades_*.xlsx"
+  let datePattern = "dd/MM/yyyy"
 
   let accountCurrency (accountId: string) = 
     currency (accountId.ToUpper().Substring(accountId.Length - 3)) |> Some
@@ -98,7 +103,7 @@ module Saxo =
                                               type'           = SecurityTransaction(SecurityTransaction.Equity)
                                               currency        = accountId |> accountCurrency } }
     | _ -> None
-
+  
   let trades worksheet predicate = 
     match worksheet with
     | Some ws ->
@@ -127,20 +132,8 @@ module Saxo =
     | _ -> Seq.empty<Trade>
 
   let worksheetFromFile folder filePattern =
-    match box (query {
-      for fl in files (importsRoot +/ folder) filePattern do
-        select fl
-        headOrDefault }) with
-    | :? string as tradesFile -> 
-
-      // TODO:
-      // 1. Read file: TradeId, AccountID, Instrument, TradeTime, B/S, OpenClose, Amount, Price
-      // 2. Split trades into open & closed transactions
-      // 3. leftOuterJoin closed transactions onto open transactions
-      //    on Instrument & Amount (make sure to * -1 negative amounts to make them positive)
-      // 4. Rows where the closed transaction in the join is null, are the remaining ones      
-      Excel.getWorksheetByIndex 2 tradesFile |> Some // Trades with additional info
-    | _ -> None
+    let tf = tradesFile importsRoot folder filePattern     
+    Excel.getWorksheetByIndex 2 tf |> Some // Trades with additional info
 
   let worksheetFromBin file = Excel.getWorksheetByIndex' 2 file |> Some
 

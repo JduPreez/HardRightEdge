@@ -29,7 +29,7 @@ let ``Securities should update share`` () =
 let ``Securities should get share`` () =
   UnitOfWork.temp {
     match insertShare () with
-    | { id = Some sid } ->  match Securities.get sid None with
+    | { id = Some sid } ->  match Securities.getById sid None with
                             | Some _  -> Assert.True(true)
                             | _       -> Assert.True(false)
     | _       -> Assert.True(false)
@@ -58,9 +58,23 @@ let ``Securities should getBySymbol`` () =
     match Securities.save (Stubs.testShare None None None) with
     | { id = Some _; platforms = platfs } ->
       let yahoo = Seq.find (fun p -> p.platform = Platform.Yahoo)  platfs
-      let share = Securities.getBySymbol yahoo.symbol Platform.Yahoo
-      Assert.NotEqual(None, share)
+      let security = Securities.getBySymbol yahoo.symbol Platform.Yahoo
+      Assert.NotEqual(None, security)
     | _               -> Assert.True(false)
+  }
+
+[<Fact>]
+let ``Securities should get all`` () =
+  UnitOfWork.temp {
+    let [sec1; sec2; sec3] as securities = [Securities.save (Stubs.testShare None None None);
+                                            Securities.save (Stubs.testShare  (Some "Apple") 
+                                                                              (Some "AAPL:xnas") 
+                                                                              (Some "AAPL"));
+                                            Securities.save (Stubs.testShare  (Some "Mastercard") 
+                                                                              (Some "MA:xnas") 
+                                                                              (Some "MA")) ]
+    let securities2 = Securities.get None
+    Assert.True(List.length(securities2) >= List.length(securities))
   }
 
 [<Fact>]

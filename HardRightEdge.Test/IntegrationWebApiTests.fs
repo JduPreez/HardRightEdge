@@ -3,8 +3,11 @@
 open FSharp.Data
 open FSharp.Data.HttpRequestHeaders
 open HardRightEdge
+open HardRightEdge.Domain
 open HardRightEdge.Test
 open HardRightEdge.Infrastructure.Serialization
+open HardRightEdge.Integration
+open System.IO
 open Xunit
 
 // TODO: Add additional parameter "test" to API.
@@ -49,5 +52,17 @@ let ``Web API should respond to OPTIONS`` () =
                     httpMethod = "OPTIONS",
                     headers = [ "Access-Control-Request-Headers", "content-type";
                                 "Access-Control-Request-Method", "PUT"] )
+
+  Assert.True(response.StatusCode = 200)
+
+[<Fact>]
+let ``Web API should upload new portfolio file`` () =
+  let filePath = tradesFile importsRoot Saxo.folder Saxo.filePattern
+  let docJson = [{ file = Some(File.ReadAllBytes(filePath)); content = None }] |> toJson
+  let response = Http.Request
+                  ( host + "/portfolio/file",
+                    httpMethod = "POST",
+                    headers = [ Accept HttpContentTypes.Json ],
+                    body = TextRequest docJson )
 
   Assert.True(response.StatusCode = 200)
