@@ -2,10 +2,13 @@ module Domain exposing (Msg(..), Platform(..), Security, SecurityPlatform, platf
 
 import Bytes exposing (Bytes)
 import Browser
+import Domain.Currencies as Currencies exposing (..)
 import File exposing (File)
 import Http
+import Iso8601 exposing (..)
 import List.Extra exposing (..)
 import Routing exposing (Route(..))
+import Time
 import Url exposing (Url)
 
 type Msg
@@ -26,14 +29,59 @@ type Platform
   | Saxo
 
 type alias SecurityPlatform =
-  { securityId : Maybe Int,
-    platform : Maybe Platform,
-    symbol : String }
+  { securityId: Maybe Int,
+    platform:   Maybe Platform,
+    symbol:     String }
 
 type alias Security =
-  { id : Maybe Int,
-    name : String,
-    platforms : List SecurityPlatform }
+  { id:         Maybe Int,
+    name:       String,
+    platforms:  List SecurityPlatform }
+
+type alias TradePattern =
+  { id:           Maybe Int,
+    name:         String,
+    subPatterns:  TradePatterns }
+
+type TradePatterns = TradePatterns (List TradePattern)
+
+type alias ProfitLoss =
+  { profitTarget:                     Float,
+    -- Calculated
+    profitTargetTotal:                Float, 
+    profitTargetTotalInclCosts:       Float,
+    profitTargetPercent:              Float,
+    profitTargetPercentInclCosts:     Float,
+    profitLoss:                       Float,
+    profitLossInclCosts:              Float,
+    profitLossPercentRisk:            Float }
+
+type alias Risk =
+  { stop:                             Float,
+    firstDeviation:                   Maybe Float,
+    -- Calculated
+    stopLossTotal:                    Float,
+    lossPercent:                      Float }
+
+type alias Trade =
+  { openDate:                         Maybe Time.Posix,
+    open:                             Float,
+    securityId:                       Int,
+    tradePattern:                     Maybe TradePattern,
+    isShort:                          Bool,
+    quantity:                         Float,
+    close:                            Float,
+    closeDate:                        Maybe Time.Posix,
+    currency:                         Currencies.Currency,
+    cost:                             Float,
+    interestPerDay:                   Float,
+    interestTotal:                    Float, -- Calculated
+    profitLoss:                       ProfitLoss,
+    profitLossHomeCurrency:           Maybe ProfitLoss,
+    risk:                             Risk,
+    riskHomeCurrency:                 Risk,
+    homeCurrency:                     Currencies.Currency,
+    conversionRate:                   Float }
 
 platform : Int -> Maybe Platform
 platform id =

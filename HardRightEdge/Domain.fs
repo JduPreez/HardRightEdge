@@ -1,7 +1,29 @@
 module HardRightEdge.Domain
 
 open System
-open OfficeOpenXml
+
+module Currencies =
+
+  type Currency =
+  | USD of int * string 
+  | EUR of int * string
+  | GBP of int * string
+  | SGD of int * string
+  | DKK of int * string
+  
+  let USD = USD(1, "USD")
+  let EUR = EUR(2, "EUR")
+  let GBP = GBP(3, "GBP")
+  let SGD = SGD(4, "SGD")
+  let DKK = DKK(5, "DKK")
+  
+  let currency symbol =
+    match symbol with
+    | "EUR" -> EUR
+    | "GBP" -> GBP
+    | "SGD" -> SGD
+    | "DKK" -> DKK
+    | _ -> USD
 
 let default' (deflt: unit -> 't) = deflt()
 
@@ -24,28 +46,6 @@ let idIs (symbol: string) (id: int) =
   let mapToId id' = 
     if symbol.ToUpper() = symbol then Some id' else None
   mapToId
-
-type CurrencyType =
-| USD of int * string 
-| EUR of int * string
-| GBP of int * string
-| SGD of int * string
-| DKK of int * string
-
-module Currency =
-  let USD = CurrencyType.USD(1, "USD")
-  let EUR = CurrencyType.EUR(2, "EUR")
-  let GBP = CurrencyType.GBP(3, "GBP")
-  let SGD = CurrencyType.SGD(4, "SGD")
-  let DKK = CurrencyType.DKK(5, "DKK")
-
-let currency symbol =
-  match symbol with
-  | "EUR" -> Currency.EUR
-  | "GBP" -> Currency.GBP
-  | "SGD" -> Currency.SGD
-  | "DKK" -> Currency.DKK
-  | _ -> Currency.USD
  
 type Platform =
 | Yahoo   = 1
@@ -63,7 +63,7 @@ type Security = {
   previousName: string option
   prices:       SecurityPrice list
   platforms:    SecurityPlatform seq
-  currency:     CurrencyType option }
+  currency:     Currencies.Currency option }
 
 type SecurityTransaction =
 | Equity = 1
@@ -95,7 +95,7 @@ type Transaction = {
   price:          float
   amount:         float
   type':          TransactionType
-  currency:       CurrencyType option }
+  currency:       Currencies.Currency option }
 
 type TradeType =
 | Bought = 1

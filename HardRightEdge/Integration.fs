@@ -1,6 +1,7 @@
 module HardRightEdge.Integration
 
 open HardRightEdge.Domain
+open HardRightEdge.Domain.Currencies
 open HardRightEdge.Infrastructure.FileSystem
 open System
 open YahooFinanceAPI
@@ -56,11 +57,11 @@ module Saxo =
 
   let shareCurrency (symbol: string) =
     match symbol.ToLower().Split([|':'|]).[1] with    
-    | "xlon"          -> Currency.GBP |> Some
-    | "xses"          -> Currency.SGD |> Some
-    | "xetr"          -> Currency.EUR |> Some
-    | "xcse"          -> Currency.DKK |> Some
-    | _               -> Currency.USD |> Some // Default to usd
+    | "xlon"          -> Currencies.GBP |> Some
+    | "xses"          -> Currencies.SGD |> Some
+    | "xetr"          -> Currencies.EUR |> Some
+    | "xcse"          -> Currencies.DKK |> Some
+    | _               -> Currencies.USD |> Some // Default to usd
 
   let toTrade (row: string seq) =
     match row |> Seq.take 12 |> List.ofSeq with
@@ -153,8 +154,4 @@ module Saxo =
       for closedTrade in result do
       where (box closedTrade = null)
       select openTrade }
-    func
-
-              
-
-    
+    func    
