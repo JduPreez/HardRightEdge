@@ -1,0 +1,8 @@
+
+hardrightedge-ui/assets/* linguist-vendored
+hardrightedge-ui/lib/* linguist-vendored
+*.js               linguist-detectable=false
+*.css              linguist-detectable=false
+*.scss             linguist-detectable=false
+*.sass             linguist-detectable=false
+*.less             linguist-detectable=false
